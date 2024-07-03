@@ -1,0 +1,124 @@
+---
+title: "Untitled"
+author: "Mauricio Mardones I."
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = F)
+```
+
+```{r}
+remotes::install_github("nmfs-fish-tools/SSMSE")
+library(SSMSE) #load the package
+library(r4ss) #install using remotes::install_github("r4ss/r4ss)
+library(foreach) #if using run_parallel = TRUE
+library(doParallel) #if using run_parallel = TRUE
+```
+
+
+
+```{r}
+# Create a folder for the output in the working directory.
+run_SSMSE_dir <- file.path("run_SSMSE-ex")
+dir.create(run_SSMSE_dir)
+```
+
+```{r}
+cod_mod_path <- system.file("extdata", "models", "cod", package = "SSMSE")
+# develop_OMs will save a model called "cod_SR_BH_steep_1" in the out_dir
+# specified
+develop_OMs(OM_name = "cod", out_dir = run_SSMSE_dir, par_name = "SR_BH_steep",
+            par_vals = 1, refit_OMs = FALSE, hess = FALSE)
+# OM model for scenario 2
+cod_1_path <- file.path(run_SSMSE_dir, "cod_SR_BH_steep_1")
+```
+
+```{r}
+# Start from a list created by a helper function
+template_mod_change <- create_future_om_list() 
+# add recruitment deviations
+rec_dev_specify <- template_mod_change[[1]]
+rec_dev_specify$pars <- "rec_devs" # apply change to rec devs
+rec_dev_specify$scen <- c("replicate", "all")
+# using 1 to 100 means the sd or mean will be calculated by taking the sd across years
+# from 1 to 100
+rec_dev_specify$input$first_yr_averaging <- 1
+rec_dev_specify$input$last_yr_averaging <- 100
+# The following 2 lines suggest that this change is immediately applied in year
+# 101, with no transitory period for using sd 0 to the new sd.
+rec_dev_specify$input$last_yr_orig_val <- 100
+rec_dev_specify$input$first_yr_final_val <- 101
+rec_dev_specify$input$ts_param <- "sd" # this change is for the sd
+# no input value needed since it will be calclated from the historical rec devs.
+rec_dev_specify$input$value <- NA
+rec_dev_specify
+```
+
+
+```{r}
+# put together the change for selectivity (random values around the orig val, with
+# an sd of 0.2)
+mod_change_sel <- template_mod_change[[1]]
+mod_change_sel$scen[2] <- "all" # apply to all scenarios
+# The following 2 lines suggest that this change is immediately applied in year
+# 101, with no transitory period for using sd 0 to the new sd.
+# historical values are NA in this case, because they are not used to determine
+# the sd to use.
+mod_change_sel$input$last_yr_orig_val <- 100
+mod_change_sel$input$first_yr_final_val <- 101
+mod_change_sel$input$ts_param <- "sd" # this change is for the sd
+mod_change_sel$input$value <- 0.2 # se to use in the projection period
+mod_change_sel
+```
+```{r}
+future_om_list_recdevs_sel <- list(rec_dev_specify, 
+                                   mod_change_sel) 
+```
+
+```{r}
+datfile <- system.file("extdata", "models", "cod", "ss3.dat", package = "SSMSE")
+sample_struct_1_scen <- create_sample_struct(dat = datfile, nyrs = 6) # note warning
+```
+
+```{r}
+sample_struct_1_scen
+```
+
+```{r}
+sample_struct_1_scen$lencomp <- NULL # don't use length sampling
+sample_struct_list_all <- list("h-ctl" = sample_struct_1_scen, "h-1" = sample_struct_1_scen)
+```
+
+```{r}
+fore <- r4ss::SS_readforecast(
+  system.file("extdata", "models", "cod", "forecast.ss", package = "SSMSE"),
+  verbose = FALSE)
+fore$Forecast 
+```
+
+Run MSE
+
+```{r}
+run_res_path <- file.path(run_SSMSE_dir, "results")
+dir.create(run_res_path)
+res <- run_SSMSE(
+    scen_name_vec = c("h-ctl", "h-1"),# name of the scenario
+    out_dir_scen_vec = run_res_path, # directory in which to run the scenario
+    iter_vec = c(5,5), # run with 5 iterations each
+    OM_name_vec = NULL, # specify directories instead
+    OM_in_dir_vec = c(cod_mod_path, normalizePath(cod_1_path)), # OM files
+    EM_name_vec = c("cod", "cod"), # cod is included in package data
+    MS_vec = c("EM","EM"), # The management strategy is specified in the EM
+    nyrs_vec = c(6, 6), # Years to project OM forward
+    nyrs_assess_vec = c(3, 3), # Years between assessments
+    future_om_list = future_om_list_recdevs_sel,
+    run_parallel = TRUE, # Run iterations in parallel
+    sample_struct_list = sample_struct_list_all, # How to sample data for running the EM.
+    sample_struct_hist_list = NULL, # because this is null, will just use sampling
+    # as in the current OM data file for the historical period.
+    seed = 12345) #Set a fixed integer seed that allows replication 
+```
+
