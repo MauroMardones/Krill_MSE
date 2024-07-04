@@ -11,13 +11,12 @@ knitr::opts_chunk$set(echo = TRUE,
 ```
 
 ```{r}
-remotes::install_github("nmfs-fish-tools/SSMSE")
+#remotes::install_github("nmfs-fish-tools/SSMSE")
 library(SSMSE) #load the package
 library(r4ss) #install using remotes::install_github("r4ss/r4ss)
 library(foreach) #if using run_parallel = TRUE
 library(doParallel) #if using run_parallel = TRUE
 ```
-
 
 
 ```{r}
