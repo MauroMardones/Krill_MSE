@@ -1,0 +1,383 @@
+---
+title: "Untitled"
+author: "Mauricio Mardones I."
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+
+Install pkgs from [Iago Github](https://github.com/flr/ss3om) 
+
+```{r setup1, echo=FALSE}
+set.seed(999)
+rm(list = ls())
+knitr::opts_chunk$set(message = FALSE,
+                      warning = FALSE,
+                      fig.align = 'center',
+                      fig.pos = "H",
+                      dev = 'jpeg',
+                      dpi = 300)
+#XQuartz is a mess, put this in your onload to default to cairo instead
+options(bitmapType = "cairo") 
+# (https://github.com/tidyverse/ggplot2/issues/2655)
+# Lo mapas se hacen mas rapido
+```
+
+```{r}
+# instal pkgs to read SS3 out puts
+#install.packages("ss3om", repos=structure(
+#  c(CRAN="https://cloud.r-project.org/", FLR="https://flr-project.org/R")))
+library(ss3om)
+library(here)
+library(FLasher)
+# viz
+library(ggthemes)
+library(egg)
+library(FLfse)
+```
+
+
+```{r}
+dir <- here("test")
+stk <- readFLSss3(dir)
+plot(stk)
+stk_stf <- window(stk, end = 2020) # cut off data after 2017
+stk_stf <- stf(stk_stf, nyears = 10) # add 10 years
+range(stk_stf)
+```
+
+Ploting variables from `SS3`krill stock assesment model
+
+```{r}
+plot(stk_stf) + 
+  geom_vline(xintercept = 2020) +
+  theme_few()
+```
+```{r}
+### get stock
+stk_par <- as(stk_stf, "FLStock")
+
+plot(stk)
+### year 1 is an unfished stock
+
+### get stock-recruitment model
+sr <- FLSR(params = params(stk_par),
+           model = model(stk_par))
+model(sr)
+params(sr)
+```
+
+
+```{r}
+sr <- as.FLSR(stk, model = "segreg") # create FLSR
+sr <- fmle(sr) # fit model
+plot(sr)
+
+
+ctrl <- data.frame(year = 2023,
+                   quant = "catch",
+                   value = 5000)
+ctrl <- fwdControl(ctrl)
+
+stk_fwd <- fwd(stk_stf, 
+               control = ctrl, 
+               sr = sr)
+plot(stk_fwd) +
+  geom_vline(xintercept = 2022)
+
+
+
+ctrl <- data.frame(year = 2020:2032,
+                   quant = "f",
+                   value = seq(from = 0.5, to = 0, length.out = 13))
+ctrl <- fwdControl(ctrl)
+stk_fwd <- fwd(stk_stf, control = ctrl, sr = sr)
+plot(stk_fwd) + 
+  geom_vline(xintercept = 2017.5)+
+  theme_bw()
+  
+
+```
+
+```{r}
+ctrl <- data.frame(year = 2023,
+                   quant = "catch",
+                   value = 5000)
+ctrl <- fwdControl(ctrl)
+
+stk_fwd <- fwd(stk_stf, 
+               control = ctrl, 
+               sr = sr)
+plot(stk_fwd) +
+  geom_vline(xintercept = 2022)
+
+ctrl <- data.frame(year = 2020:2032,
+                   quant = "f",
+                   value = seq(from = 0.5, to = 0, length.out = 13))
+ctrl <- fwdControl(ctrl)
+stk_fwd <- fwd(stk_stf, control = ctrl, sr = sr)
+plot(stk_fwd) + 
+  geom_vline(xintercept = 2017.5)+
+  theme_bw()
+
+
+f_trgts <- seq(from = 0, to = 1, by = 0.1)
+stks <- lapply(f_trgts, function(x) {
+  ctrl <- data.frame(year = 2020:2032,
+                     quant = "f",
+                     value = x)
+  ctrl <- fwdControl(ctrl)
+  stk_fwd <- fwd(stk_stf, control = ctrl, sr = sr)
+  return(stk_fwd)
+})
+stks <- FLStocks(stks)
+names(stks) <- f_trgts
+plot(stks)+
+  theme_bw()+
+  scale_color_viridis_d()
+```
+
+
+
+```{r results = "hide", message = FALSE}
+library(FLCore) # core functionality
+library(FLasher) # for projections
+library(ggplotFL) # for plotting
+```
+
+### Prepare operating model (OM)
+
+`stk` is the basis for the operating model. Extend the stock for 10 years (without uncertainty):
+
+```{r}
+stk_fwd <- window(stk, end = 2022) 
+stk_fwd <- stf(stk_fwd, nyears = 10) # add 10 years
+```
+
+And create a recruitment model (without any error)
+
+```{r results = "hide", warning = FALSE}
+sr <- as.FLSR(window(stk, start = 2004, end = 2021), 
+              model = "segreg") # create FLSR
+sr <- fmle(sr, control = list(trace = 0)) # fit model
+# trace = 0 turns off console output of model fitting
+```
+
+Some recruitment and SSB values from the beginning/end of the time series are cut off in `sr` to account for the recruitment age (might be different from 0) and the time lag between SSB the recruitment the next year.
+
+### Management procedure (MP) - chr rule
+
+First, we use a constant harvest rate approach. A harvest rate is the catch divided by the stock size. We will use a harvest control rule (HCR) similar to ICES' chr rule, one of the approaches for category 3 data-limited stocks.
+
+This HCR sets the catch $C$ by multiplying a stock size indicator $I$ with a target harvest rate $H$:
+
+$$
+C = H \times I \times b
+$$
+
+where $b$ is a biomass safeguard, that reduces the catch when the stock size $B$ falls below a trigger level $I_{\text{trigger}}$:
+
+$$
+b = \text{min}\left(1, I/I_\text{trigger} \right)
+$$
+
+We define some (arbitrary) control paramters for this HCR:
+```{r}
+Htrgt <- 0.2
+Itrigger <- 50
+```
+
+#### MSE loop chr rule
+
+Then we can set up an MSE loop. This follows the typical ICES assessment schedule, where the assessment is conducted in an intermediate year (`ay`), data is available up to the year before the intermediate year (`ay-1`), and catch advice is provided for the year following the intermediate year (`ay+1`). Consequently, we start the MSE loop in year 2017 (the intermediate year), to set the first catch advice for 2018.
+
+```{r, warning = FALSE, message = FALSE}
+### loop through years
+for (ay in 2022:2031) {
+  
+  ### OM
+    ### OM - observations: assume perfect observations
+    ### data available up to year ay-1
+    stk0 <-  window(stk_fwd, end = ay - 1) ### observed stock
+  
+  ### MP
+    ### MP - estimator (stock assessment): none - assume perfect knowledge
+    stk0 <- stk0 ### modelled stock
+    I <- tail(ssb(stk0)) ### stock size indicator
+  
+    ### MP - decision model
+    ### hockey-stick constant harvest rate (chr rule)
+    
+    ### biomass safeguard: SSB status relative to trigger
+    b <- ifelse(I >= Itrigger, 1, I/Itrigger)
+    
+    ### calculate catch advice
+    advice <- c(Htrgt * I * b)
+  
+  ### OM
+    ### OM - Implementation model: assume perfect implementation
+    catch <- advice
+  
+    ### OM - fishery & stock dynamics
+    ### set catch target
+    ctrl <- fwdControl(data.frame(year = ay + 1,
+                                  quant = "catch",
+                                  value = catch))
+    ### projection (update OM by one year)
+    stk_fwd <- fwd(stk_fwd, control = ctrl, sr = sr)
+    
+  ### status message
+  cat(paste0("finished year ", ay, ", MP target C=", round(catch), "\n"))
+    
+}
+
+```
+
+Then, we can plot the operating model results.
+
+```{r, dpi=300}
+plot(stk_fwd)
+```
+
+Metrics such as mean fishing mortality can be seen with the usual functions.
+
+```{r}
+fbar(stk_fwd)
+ssb(stk_fwd)
+```
+
+### Management procedure (MP) - ICES MSY rule
+
+Second, we will use the ICES MSY rule. This HCR is the standard approach for ICES data-rich category 1 stocks and works very similar to the chr rule above, but targets a fishing mortality $F$:
+
+$$
+F = F_\text{target} \times \text{min}\left(1, B/B_\text{trigger} \right)
+$$
+
+We can define the control parameters of the MSY rule:
+
+```{r}
+Ftrgt <- 2.31
+Btrigger <- 15
+```
+
+#### MSE loop ICESMSY rule
+
+The output of the ICES MSY rule is a fishing mortality. However, this needs to be converted to catch value with a short-term forecast.
+
+The ICES MSY rule is typically applied based on the results from a stock assessment, and a short-term forecast. In this example, we bypass the stock assessment and pass the stock size directly to the MP. It is therefore a shortcut MSE.
+
+```{r, warning = FALSE, message = FALSE, dpi=300}
+### loop through years
+for (ay in 2022:2031) {
+  
+  ### OM
+    ### OM - observations: assume perfect observations
+    stk0 <-  window(stk_fwd, end = ay - 1) ### observed stock
+  
+  ### MP
+    ### MP - estimator (stock assessment): none - assume perfect knowledge
+    stk0 <- stk0 ### modelled stock
+  
+    ### MP - decision model
+    ### hockey-stick advice rule
+    ### SSB status relative to Btrigger (control parameter)
+    mult <- ifelse(tail(ssb(stk0)) >= Btrigger, 1, tail(ssb(stk0))/Btrigger)
+    ### set F target
+    target <- Ftrgt * mult
+  
+    ### convert F target into catch advice with short-term forecast
+    ### current estimated F
+    fsq <- c(tail(fbar(stk0))) 
+    ### recruitment assumption (in decision model): average of last 10 years
+    ### format as FLPar object to tell FLR this is a parameter value
+    rec_average <- FLPar(mean(tail(rec(stk0), 10)))
+    ### create recruitment model
+    sr0 <- FLSR(model = "geomean", 
+                residuals = FLQuant(1), 
+                params = rec_average)
+    ### extend stock used in short-term forecast 
+    stk0_stf <- stf(stk0, nyears = 2)
+    ### set short-term forecast target
+    ### (assume status quo F for intermediate year, then F target)
+    ctrl0 <- fwdControl(data.frame(year  = c(ay, ay + 1),
+                                   quant = c("f", "f"),
+                                   value = c(c(fsq), c(target))))
+    ### run short-term forecast
+    stk0_stf <- fwd(stk0_stf, control = ctrl0, sr = sr0)
+    ### extract catch advice
+    advice <- c(tail(catch(stk0_stf)))
+  
+  ### OM
+    ### OM - Implementation model: assume perfect implementation
+    catch <- advice
+  
+    ### OM - fishery & stock dynamics
+    ### set catch target
+    ctrl <- fwdControl(data.frame(year = ay + 1,
+                                  quant = "catch",
+                                  value = catch))
+    ### projection (update OM by one year)
+    stk_fwd <- fwd(stk_fwd, control = ctrl, sr = sr)
+    
+  ### status message
+  cat(paste0("finished year ", ay, ", MP target F=", 
+             round(ctrl0$value[2], 2), "\n"))
+
+}
+  
+```
+
+
+```{r, warning = FALSE, message = FALSE, dpi=300}
+plot(stk_fwd)+
+  geom_line()+
+  theme_few()
+```
+###
+
+
+```{r}
+### fit SAM to cod
+fit <- FLR_SAM(stk = stk_fwd, 
+               idx = cod4_idx, 
+               conf = cod4_conf_sam)
+### the output is a normal SAM object
+fit
+tail(summary(fit))
+plot(stk)
+```
+
+
+
+```{r}
+idx <- readRDS(here("FLR_examples",
+            "7_FLR_MSE","OM_files",
+            "idx.rds")) ### indices
+catch_res <- readRDS(here("FLR_examples",
+            "7_FLR_MSE","OM_files",
+            "catch_res.rds")) ### catch residuals
+idx_dev <- readRDS(here("FLR_examples",
+            "7_FLR_MSE","OM_files",
+            "idx_dev.rds")) ### catch residuals
+### load projection method
+source(here("FLR_examples",
+            "7_FLR_MSE",
+            "MSE_functions",
+            "funs_MSE_oem.R"))
+### create the FLoem
+oem <- FLoem(observations = list(stk = stk0, idx = idx),
+             deviances = list(stk = FLQuants(catch.dev = catch_res),
+                              idx = idx_dev),
+             method = oem_WKNSMSE,
+             ### additional arguments, passed to method
+             args = list(idx_timing = c(0, -1), ### index timing rel. to ay
+                         catch_timing = -1, ### catch timing rel to ay
+                         use_catch_residuals = TRUE, ### add catch noise? 
+                         use_idx_residuals = TRUE ### add idx noise?
+                         ))
+
+class(oem)
+slotNames(oem)
+```
+
