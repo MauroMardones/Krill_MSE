@@ -1,43 +1,50 @@
 ---
-title: "Black Spott Seabream: Short-Cut MSE approach for robustness tests of harvest control rules in sex-structured models"
-
+title: "Krill en la WAP: Evaluación de reglas de control de captura con un modelo operativo basado en SS3"
 author: 
- - Henning Winker (GFCM) 
+  - Mauricio Mardones (IEO - Proyecto INBENTO)
 date: "`r format(Sys.time(), '%d %B, %Y')`"
+bibliography: SA_krill.bib
+csl: icesjournal.csl
+link-citations: yes
+linkcolor: blue
 output:
-  pdf_document:
-    number_sections: yes
-    toc: yes
-    #keep_tex: false
-vignette: >
-  %\VignetteIndexEntry{ss3daigs Vignetted}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  bookdown::html_document2:
+    keep_md: true
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    theme: cosmo
+    fontsize: 0.9em
+    linestretch: 1.7
+    html_math_method: katex
+    self-contained: true
+    code-tools: true
+    number_sections: false
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
-```{r wrap-hook, echo = FALSE,warning=FALSE,message=FALSE}
-library(knitr)
-hook_output = knit_hooks$get('output')
+```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+opts_chunk$set(
+  collapse = TRUE,
+  comment = "  ",
+  fig.align = 'center',
+  cache = FALSE,
+  tidy.opts = list(width.cutoff = 55),
+  tidy = TRUE
+)
+
 knit_hooks$set(output = function(x, options) {
-  # this hook is used only when the linewidth option is not NULL
   if (!is.null(n <- options$linewidth)) {
-    x = knitr:::split_lines(x)
-    # any lines wider than n should be wrapped
-    if (any(nchar(x) > n)) x = strwrap(x, width = n)
-    x = paste(x, collapse = '\n')
+    x <- knitr:::split_lines(x)
+    if (any(nchar(x) > n)) x <- strwrap(x, width = n)
+    x <- paste(x, collapse = '\n')
   }
-  hook_output(x, options)
+  x
 })
-```
-
-
-```{r, echo = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, 
-                      comment = "  " ,
-                      fig.align = 'center',
-                      cache=FALSE,
-                      tidy.opts=list(width.cutoff=55), 
-                      tidy=TRUE)
 ```
 
 Load packages
@@ -59,15 +66,17 @@ library(here)
 
 # Short-Cut MSE for Harvest Control Rule (HCR) 
 
-In contrast to a full Management Strategy Evaluation (MSE) simulation design (Punt et al. 2017), the MSE  ‘shortcut’ approach, omits the step of the annual updating of the estimation model (assessment) in the feedback control.  Instead, it emulates an annual update of the benchmark assessment model by passing outcomes ($SSB$ and $F$) from the 'true' age-structured dynamics from the operating model (OM) with assessment error to the harvest control rule (HCR) and catch implementation system. 
 
-The HCRs were implemented using a simulated feedback control loop between the implementation system and the operating model, where the implementation system translates the emulated assessment outcome via the HRC into  the Total Allowable Catch (TAC) advice. The feedback control loop between the implementation system and the OM allows accounting for the lag between the last of year data used in the assessment and the implementation year of catch advice ($C_{adv}$). 
+Different to Management Strategy Evaluation (MSE) simulation design (Punt et al. 2017), the MSE `shortcut` approach omits the step of the annual updating of the estimation model (assessment) in the feedback control. Instead, it emulates an annual update of the benchmark assessment model by passing outcomes ($SSB$ and $F$ or equivalents) from the 'true' age-structured dynamics of the operating model (OM), with assessment error, to the harvest control rule (HCR) and catch implementation system.
 
-For blackspot seabream, the implementation system of the harvest control rule is based on the assumption that advice is given for year $y+1$ based on an assessment completed in year $y$, which is fitted to data up until last data year $y-1$. Therefore implementation of the  derived $C_{adv}$ through HCR requires projection of the stock dynamics by way of a short-term forecast. To do this, numbers-at-age were projected through the year of assessment. Status quo recruitment, $M_a$, $w_a$ and $mat_a$ were set as the mean of the last 3 years. A projection based on a fixed fishing mortality-at-age to the last year ($y-1$) in the assessment is then made through to the implementation year ($y+1$).
+The HCRs are implemented using a simulated feedback control loop between the implementation system and the operating model, where the implementation system translates the emulated assessment outcome into the Total Allowable Catch (TAC) advice. The feedback control loop accounts for the lag between the last year of data used in the assessment and the implementation year of catch advice ($C_{adv}$).
 
-The limitations of the MSE short-cut approach are that it cannot fully account for uncertainties resulting from imperfect sampling of the full age-structure (e.g. poorly sampled recruits), observation error, misspecified model assumptions and selectivity. On the other hand, the short-cut MSE approach is straight-forward to implement (`FLR`) and reduced complexity and computation time when the focus is predominantly optimizing HCRs for setting quotas on the premises that a benchmark assessment form the basis for the advice.
+For Antarctic krill in the Western Antarctic Peninsula (WAP), the implementation system of the harvest control rule is based on the assumption that advice is given for year $y+1$ based on an assessment completed in year $y$, using data available up to year $y-1$. The implementation of the derived $C_{adv}$ through the HCR therefore requires projection of stock dynamics via a short-term forecast. To do this, numbers-at-size (or -age) are projected through the year of assessment. Parameters such as recruitment, natural mortality ($M$), weight-at-size, and maturity are set as the mean of the last three years. A projection based on a fixed exploitation rate or fishing mortality corresponding to the last year ($y-1$) is used through to the implementation year ($y+1$).
 
-Here, the MSE short-cut approach is implemented using the tools available in the Fisheries Library for R (FLR; Kell et al., 2007; https://flr-project.org/) 
+The goal of this application is to test the robustness of the current harvest control rule used by CCAMLR for krill, which consists of a fixed TAC of 145,000 tonnes per year. The shortcut MSE approach facilitates this by reducing computational complexity and avoiding the need for annual full assessments, while still capturing feedback effects between advice and stock dynamics.
+
+
+Here, the MSE short-cut approach is implemented using the tools available in the Fisheries Library for R (FLR; Kell et al., 2007; [FLR Library](https://flr-project.org/) 
 
 
 ## Glossary
@@ -259,7 +268,6 @@ Note that minor deviations are likely due to difficulties in precisely adjusting
 ## Estimate candidate reference points
 
 ```{r}
-
 # Main recdevs
 recyrs = recruit$Yr[recruit$era =="Main"]
 maindevs = unitSums(residuals[,ac(recyrs)])
