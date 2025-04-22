@@ -138,10 +138,8 @@ sr1 = srrTMB(as.FLSR(stka,
 
 
 ```{r , message=FALSE,warning=FALSE,fig.width=9,fig.height=7, fig.cap = paste0("Comparison of stock stock-recruitment function from ss3 and retuned single-sex with FLSRTMB ") }
-
 plotsrs(FLSRs(ss3=sr,
               sr=sr1))
-
 ```
 Check that the fbar range is consistent with `ss.starter` input.
 
@@ -158,11 +156,9 @@ plot(stk,
   theme_bw()+
   ylab("F")+
   xlab("Year")+
-  facet_wrap(~qname,scales="free_y")
+  facet_wrap(~qname,
+             scales="free_y")
 ```
-
-
-
 
 \pagebreak
 
@@ -189,19 +185,15 @@ plotbioyr(stk)+
 \newpage 
 
 ```{r fig1.1.4, fig.height=6, fig.cap = paste0("Annual stock quanties at age")}
-
 plotbioage(stk)+
   theme(legend.position = "none")+
   scale_color_viridis_d(option="G")
 ```
 
-
-
 \pagebreak
 
 ## Consistency checks using backtesting
 
-Set seed
 
 ```{r}
 set.seed(123)
@@ -223,7 +215,6 @@ params(sra) = FLPar(an(sr@params[,1]),params=rownames(sr@params))
 } else {
 sra = sr1
 stka = stk
-  
 }
 ```
 
@@ -243,7 +234,7 @@ if (dims(stk)$unit == 2) recs <- expand(recs, unit = c("F", "M"))
 ```
 
 ```{r}
-if (dims(stka)$unit == 2)
+if (dims(stka)$unit == 3)
 yrs = an(dimnames(stka)$year)
 testC = fwd(stka,sr=recs[,ac(yrs[-1])],
   control=fwdControl(year=yrs[-1], value=(unitSums(catch(stka)[, ac(yrs[-1])])),
@@ -252,8 +243,6 @@ testC = fwd(stka,sr=recs[,ac(yrs[-1])],
 testF = fwd(stka, sr=recs[,ac(yrs[-1])],
   control=fwdControl(year=yrs[-1], value=unitMeans(fbar(stka)[, ac(yrs[-1])]),
   quant="fbar"))
-
-
 ```
 
 ```{r hc1, message=FALSE,warning=FALSE,fig.width=9,fig.height=7, fig.cap = paste0("Comparison of stock trajectories from ss3om and a backtest under the same Fbar") }
@@ -282,7 +271,7 @@ sigmaR
 
 # MSY refpts
 Bmsy <- out$derived_quants$Value[out$derived_quants$Label=="SSB_MSY"]
-Fmsy <- out$derived_quants$Value[out$derived_quants$Label=="annF_MSY"]
+Fmsy <- 0.001
 MSY <- out$derived_quants$Value[out$derived_quants$Label=="Dead_Catch_MSY"]
 out$derived_quants$Value[out$derived_quants$Label=="B_MSY/SSB_unfished"]
 # Short cut devs
@@ -304,8 +293,8 @@ Specify EQSIM outputs
 Blim=145000
 Bpa=620000
 Btri.eq = 620000
-Feq =0.001  
-Fp05.eq =0.001
+Feq =0.018  
+Fp05.eq =0.018
 ```
 
 Note that in this case the "true" $F_{MSY}$ as the property of the model is smaller than the $F_{MSY}$ derived from EQsim. This may be explained by the presence of the harvest control rule resulting in effective taking place, on average, below Btrigger.
@@ -319,15 +308,12 @@ Function to find $B$ for $F$ at equilibrium
 
 ```{r}
 fwdB4F = function(stock,sr,Fs=0.2,nfy=100){
-
     if (class(stock) == "FLStockR") {
-     
-        stock = as(stock, "FLStock")
+      stock = as(stock, "FLStock")
     }
     fyrs = (dims(stock)$maxyear + 1):(dims(stock)$maxyear + nfy)
     nfy = length(fyrs)
     stkf = stf(stock, nfy)
-    
     bx = do.call(c, lapply(an(Fs),function(x){
     ictrl = fwdControl(data.frame(year = fyrs, quant =  "fbar", value = x))
     out = fwd(stkf, sr = sr, control = ictrl)
@@ -350,10 +336,11 @@ Ftgt
 ```
 
 ```{r,eval=F}
-Bftgt = fwdB4F(stka,sra,Fs=Ftgt,nfy=200)
-
+Bftgt = fwdB4F(stka,
+               sra,
+               Fs=Ftgt,
+               nfy=200)
 Bftgt
-
 ```
 
 ```{r, eval=FALSE, echo=FALSE}
@@ -471,7 +458,7 @@ For illustration the number of iterations are reduced to 100.
 
 ```{r}
 # NUMBER iterations
-it <- 1000
+it <- 100
 ```
 
 Subset the 1000 simulated stock iterations to the first 100
@@ -504,7 +491,7 @@ om <- FLom(stock=stki,
            projection=mseCtrl(method=fwd.om),
            deviances=srdevs)
 
-class(om)
+om
 ```
 
 Next add the structure for the future years: average of last 3 years
@@ -531,7 +518,7 @@ Short-cut deviations
 ```{r tidy=FALSE}
 sdevs <- shortcut_devs(om, 
                        Fcv=spars["Fcv"], 
-                       Fphi=0.432, 
+                       Fphi=0.5, 
                        SSBcv=spars["SSBcv"])
 
 ```
@@ -928,6 +915,35 @@ runs <- mps(om,
 
 Note the this was run on a linux cluster in parallel
 
+```{r}
+# Divide en lotes de 100
+ni <- length(hcrs$target)  # ← esto es clave
+
+batch_size <- 100  # puedes ajustar este valor según tu iMac
+batches <- split(seq(ni), ceiling(seq_along(seq(ni)) / batch_size))
+
+
+for (b in seq_along(batches)) {
+  runs_batch <- foreach(i = batches[[b]]) %dopar% {
+    # mismo cuerpo del loop...
+  }
+  saveRDS(runs_batch, file = paste0("s1.4/runs_batch_", b, ".rds"))
+}
+
+
+runs <- list()
+for (i in seq(ni)) {
+  hcr = arule
+  hcr$hcr@args$target = hcrs$target[i]
+  hcr$hcr@args$trigger = hcrs$trigger[i]
+  
+  runi <- mp(om, oem=oem, ctrl=hcr, args=mseargs, verbose=TRUE, parallel = FALSE)
+  runs[[i]] <- runi
+}
+
+```
+
+
 ```{r,eval=F}
 library(doParallel)
 load("rdata/inpMP.sbr.1000.rdata",
@@ -1119,7 +1135,7 @@ Replace deterministic MSY with MSE MSY from a run with the true, fixed $F_{MSY}$
 ```{r}
 refpts.perf = refpts
 refpts.perf = rbind(refpts.perf,
-                    FLPar(MSY= median(unitSums(catch(stks$Fmsy.OM[,ac((fy-24):fy)])))))
+                    FLPar(MSY= median(unitSums(catch(stks$Fmsy.OM[,ac((fy-10):fy)])))))
 
 ```
 
@@ -1131,7 +1147,7 @@ perf <- performance(stks,
                     refpts=refpts.perf,
                     metrics=metrics, 
                     statistics=stats, 
-                    years=list((fy-25):fy))
+                    years=list((fy-10):fy))
 
 ```
 
@@ -1201,7 +1217,7 @@ kbcex =function(){theme(plot.title = element_text(size=10),
                         legend.key.width = unit(0.4, 'cm'), #change legend key width
                         legend.text = element_text(size=10)) #change legend text font size
 }
-kobeMPs(perf,y="a.medianFmsy", x="b.medianBmsy", SBlim=NULL, Ftarget = 1)+
+kobeMPs(perf,y="a.medianFmsy", x="b.medianBmsy")+
   ylab(expression(F/F[MSY]))+xlab(expression(B/B[MSY]))+ylim(0,2.5)+kbcex()+theme()+guides(fill= guide_legend(ncol = 1))
 
 ```
