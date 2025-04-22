@@ -27,6 +27,3 @@ The approach is adapted from the work of **Henning Winker (GFCM)** on **Blackspo
 
 - R and the **[FLR framework](https://flr-project.org/)**
 
----
-
-Let me know if you want a Spanish version too or add setup instructions!
