@@ -28,6 +28,7 @@ editor_options:
 ---
 
 ```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+library(knitr)
 opts_chunk$set(
   collapse = TRUE,
   comment = "  ",
@@ -106,7 +107,6 @@ SS3 outputs are loaded with the `readFLSss3()` into an `FLStock` object. The fol
 In the following, the area outside is evaluated first.
 
 
-
 ```{r, eval=FALSE}
 dir1 <- here("s1.4")
 run = "krill.stock.wAP"
@@ -119,6 +119,7 @@ sr = ss3om::readFLSRss3(dir1,run)
 stk@name = run
 stk@desc = "2024, CCAMLR, SS3"
 out = ss3om::readOutputss3(dir1)
+#save(stk, sr, out, file = "base.model1.4.RData")
 ```
 
 ```{r, echo=F}
@@ -920,8 +921,8 @@ runs <- mps(om,
             args=mseargs,
             hcr=hcrs)
 ```
+this a bypass to run in MAC
 
-Note the this was run on a linux cluster in parallel
 
 ```{r}
 # Divide en lotes de 100
@@ -951,6 +952,8 @@ for (i in seq(ni)) {
 
 ```
 
+Note the this was run on a linux cluster in parallel
+(dont run in MACs !!)
 
 ```{r,eval=F}
 library(doParallel)
@@ -984,9 +987,10 @@ runs <- foreach(i = seq(ni)) %dopar% {
 end = Sys.time()
 time = end-start
 time
+```
 
 
-
+```{r}
 nfs = length(df$Tune[-1])
 tri = c(rep(".Btri.eq",
             each=nfs))

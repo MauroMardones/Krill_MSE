@@ -3,5 +3,6 @@
 .RData
 .Ruserdata
 run_SSMSE-ex*/
-test*/
-s1.4*/
+test/
+s1.4/
+rdata/

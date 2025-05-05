@@ -1,6 +1,6 @@
 # Short-Cut MSE for Antarctic Krill – WAP
 
-This project implements a **short-cut Management Strategy Evaluation (MSE)** to test the robustness of the **fixed TAC rule (145,000 t/year)** currently used by **CCAMLR** for Antarctic krill (*Euphausia superba*) in the Western Antarctic Peninsula (WAP).
+This project implements a **short-cut Management Strategy Evaluation (MSE)** to test the robustness of the **fixed TAC rule (145,000 t/year)** currently used by **CCAMLR** for Antarctic krill (*Euphausia superba*) in 48.1 Subarea in the Western Antarctic Peninsula (WAP).
 
 The approach is adapted from the work of **Henning Winker (GFCM)** on **Blackspot seabream**, specifically his framework for shortcut MSEs in sex-structured models.
 
