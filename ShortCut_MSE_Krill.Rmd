@@ -1,31 +1,40 @@
 ---
-title: "Krill en la WAP: Evaluación de reglas de control de captura con un modelo operativo basado en SS3"
-author: 
-  - Mauricio Mardones (IEO - Proyecto INBENTO)
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-bibliography: SA_krill.bib
-csl: icesjournal.csl
-link-citations: yes
-linkcolor: blue
+title: "![](logoUMAG.jpg){width=4cm}"
 output:
-  bookdown::html_document2:
-    keep_md: true
+  pdf_document:
+    includes:
+      before_body: titulo.sty
+    keep_tex: yes
+    number_sections: no
     toc: true
     toc_depth: 3
-    toc_float:
-      collapsed: false
-      smooth_scroll: false
-    theme: cosmo
-    fontsize: 0.9em
-    linestretch: 1.7
-    html_math_method: katex
-    self-contained: true
-    code-tools: true
-    number_sections: false
-editor_options: 
-  markdown: 
-    wrap: 72
+bibliography: SA_krill.bib
+csl: apa.csl
+link-citations: yes
+linkcolor: blue
+indent: no
+header-includes:
+- \usepackage{fancyhdr}
+- \pagestyle{fancy}
+- \fancyhf{}
+- \lfoot[\thepage]{}
+- \rfoot[]{\thepage}
 ---
+
+
+```{=tex}
+\fontsize{10}{18}
+\selectfont
+```
+
+```{r setup, include=FALSE, message=F}
+rm(list = ls())
+options(bitmapType = "cairo") 
+#XQuartz is a mess, put this in your onload to default to cairo instead (https://github.com/tidyverse/ggplot2/issues/2655)
+# Lo mapas se hacen mas rapido
+# solo para IOs
+```
+
 
 ```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
 library(knitr)
@@ -48,6 +57,22 @@ knit_hooks$set(output = function(x, options) {
 })
 ```
 
+\pagebreak
+
+# INTRODUCTION
+
+This work presents a Management Strategy Evaluation (MSE) framework applied to Antarctic krill (*Euphausia superba*) in the Western Antarctic Peninsula (WAP), representing the first implementation of an MSE based on an integrated stock assessment model using `SS3` (Stock Synthesis 3) as the operating model for this species.
+
+The simulation framework is structured following the general principles developed under the ICES MSE BlackSteam Working Group, and it draws heavily on methodologies established in the **FLR** (Fisheries Library in R) framework. The MSE is built upon FLR packages such as `FLCore`, `FLAssess`, and `FLasher`, which provide the computational tools and object-oriented architecture to implement and evaluate management strategies in a reproducible and flexible way.
+
+The objective of this MSE is to test the performance of alternative Harvest Control Rules (HCRs) in meeting predefined conservation and yield objectives under uncertainty in stock dynamics and observation processes. The operating model (OM) represents the "true" krill population dynamics, incorporating recruitment variability, environmental forcing, and stochasticity in both biological and fishery processes. The estimation model (EM) simulates the application of a stock assessment under realistic monitoring and assessment error, informing annual catch limits.
+
+By adopting this approach, the study provides a transparent and policy-relevant evaluation of candidate HCRs for krill fisheries in the WAP, in this case, the currently catch limit. This research is developed within an academic framework and aims to provide a methodological contribution to the ongoing discussions regarding the revision of krill new management strategy under CCAMLR. By demonstrating the feasibility and utility of implementing a Management Strategy Evaluation using an SS3-based operating model and tools from the FLR framework, this study offers a scientifically robust foundation to support the development of adaptive, ecosystem-informed harvest strategies aligned with the precautionary and ecosystem-based principles of CCAMLR.
+
+All model code process and simulation tools will made openly available to the scientific community, encouraging transparency, reproducibility, and constructive feedback to refine and strengthen this approach through collaborative development.
+
+
+
 Load packages
 
 
@@ -67,7 +92,7 @@ library(ss3sim)
 library(kableExtra)
 ```
 
-# Short-Cut MSE for Harvest Control Rule (HCR) 
+# Short-Cut MSE for Harvest Control Rule (HCR) in krill 
 
 
 Different to Management Strategy Evaluation (MSE) simulation design (Punt et al. 2017), the MSE `shortcut` approach omits the step of the annual updating of the estimation model (assessment) in the feedback control. Instead, it emulates an annual update of the benchmark assessment model by passing outcomes ($SSB$ and $F$ or equivalents) from the 'true' age-structured dynamics of the operating model (OM), with assessment error, to the harvest control rule (HCR) and catch implementation system.
@@ -76,10 +101,7 @@ The HCRs are implemented using a simulated feedback control loop between the imp
 
 For Antarctic krill in the Western Antarctic Peninsula (WAP), the implementation system of the harvest control rule is based on the assumption that advice is given for year $y+1$ based on an assessment completed in year $y$, using data available up to year $y-1$. The implementation of the derived $C_{adv}$ through the HCR therefore requires projection of stock dynamics via a short-term forecast. To do this, numbers-at-size (or -age) are projected through the year of assessment. Parameters such as recruitment, natural mortality ($M$), weight-at-size, and maturity are set as the mean of the last three years. A projection based on a fixed exploitation rate or fishing mortality corresponding to the last year ($y-1$) is used through to the implementation year ($y+1$).
 
-The goal of this application is to test the robustness of the current harvest control rule used by CCAMLR for krill, which consists of a fixed TAC of 145,000 tonnes per year. The shortcut MSE approach facilitates this by reducing computational complexity and avoiding the need for annual full assessments, while still capturing feedback effects between advice and stock dynamics.
-
-
-Here, the MSE short-cut approach is implemented using the tools available in the Fisheries Library for R (FLR; Kell et al., 2007; [FLR Library](https://flr-project.org/) 
+The goal of this application is to test the robustness of the current harvest control rule used by CCAMLR for krill, which consists of a fixed TAC of 145,000 tonnes per year. The shortcut MSE approach facilitates this by reducing computational complexity and avoiding the need for annual full assessments, while still capturing feedback effects between advice and stock dynamics. Here, the MSE short-cut approach is implemented using the tools available in the Fisheries Library for R (FLR; Kell et al., 2007; [FLR Library](https://flr-project.org/) 
 
 
 ## Glossary
@@ -89,7 +111,7 @@ that are considered for tuning the candidate HCRs to optimise the trade-offs bet
 opportunity and risk:
 
 
-+ $F_{MSY}$: target reference point for fishing mortality at Fmsy (or its proxy), (e.g. $F_{B35}$)
++ $F_{MSY}$: target reference point for fishing mortality at Fmsy (or its proxy), (e.g. $F_{first year}$)
 
 + $B_{MSY}$: the average biomass around which the biomass fluctuated when fishing at $F_{MSY}$ or its proxy (e.g. $B_{35}$)
 
@@ -102,11 +124,12 @@ opportunity and risk:
 + $B_{trigger}$: biomass trigger point of the HCR, specified as change point of biomass below which fishing mortality reduced relative to Ftgt. Btrigger is typically specified as ratio to $B_{MSY}$.
 
 
-# Build FLStock
+# METHODOLOGY
 
-SS3 outputs are loaded with the `readFLSss3()` into an `FLStock` object. The folder that contains the model outputs has to be specified.
 
-In the following, the area outside is evaluated first.
+## Operating Model developing
+
+Build `FLStock` object.
 
 
 ```{r, eval=TRUE}
@@ -123,6 +146,10 @@ stk@desc = "2024, CCAMLR, SS3"
 out = ss3om::readOutputss3(dir1)
 #save(stk, sr, out, file = "base.model1.4.RData")
 ```
+
+
+This code block initiates the setup of the operating model by reading and simplifying the stock and recruitment objects generated by the SS3 model. The working directory for the model outputs is specified (`dir1 <- here("s1.4")`), pointing to the folder that contains the SS3 output files. The main stock object (`stk`) is read using `ss3om::readFLSss3()`, and is then simplified using the `simplify()` function to remove unnecessary complexity. Missing values for the timing of spawning in both natural mortality and harvest are set to zero (`m.spwn[] = 0`, `harvest.spwn[] = 0`) to ensure consistency and completeness of the object. The recruitment object (`sr`) is read using `ss3om::readFLSRss3()`, and metadata for the stock object is updated for documentation purposes, indicating the model name and description, including year and source. Finally, all additional output files from SS3 (e.g., biomass, selectivity, fishing mortality) are read and stored in `out` using `ss3om::readOutputss3()`. This prepares the objects necessary for subsequent use in Management Strategy Evaluation (MSE) simulations.
+
 
 ```{r, eval=FALSE}
 run = "krill.stock.wAP"
@@ -147,18 +174,26 @@ sr1 = srrTMB(as.FLSR(stka,
              s.est=F)
 ```
 
+First, key parameters of the SR function are extracted from the recruitment object (`sr`), including `s` (shape or steepness parameters), `R0` (unfished recruitment), and `B0` (unfished spawning biomass). Then, a new SR relationship object (`sr1`) is created using the `srrTMB` function, which fits a Beverton-Holt stock-recruitment model with stochastic variation (denoted by the `bevholtSV` model). The input stock-recruitment data is converted to an `FLSR` object using `as.FLSR(stka)`. The `spr0` argument sets the unfished spawning potential ratio, calculated as the mean over years from the stock object (`stk`). The initial recruitment parameter `r0.pr` is initialized with `R0` and a small variance (0.0001). The `s` parameter is fixed (`s.est=F`) indicating it will not be estimated in this fit.
 
-```{r , message=FALSE,warning=FALSE,fig.width=9,fig.height=7, fig.cap = paste0("Comparison of stock stock-recruitment function from ss3 and retuned single-sex with FLSRTMB ") }
+This retuning step ensures that the recruitment dynamics incorporated in the model reflect updated or refined parameter estimates for more realistic population projections in subsequent MSE simulations (Figure \@ref(fig:sr)).
+
+
+```{r sr , message=FALSE,warning=FALSE,fig.width=6,fig.height=4, fig.cap = paste0("Comparison of stock stock-recruitment function from ss3 and retuned single-sex with FLSRTMB ") }
 plotsrs(FLSRs(ss3=sr,
               sr=sr1))
 ```
-Check that the fbar range is consistent with `ss.starter` input.
+Check that the `fbar` range is consistent with `ss.starter` input.
 
 ```{r}
 range(stk)
 ```
 
-```{r , message=FALSE,warning=FALSE,fig.height=6,fig.width=8, fig.cap = paste0("Seasonal  stock trajectories") }
+
+Figure \@ref(fig:mainvar) displays key krill population and fishery variables for Management Strategy Evaluation (MSE), showing Spawning Stock Biomass (SSB) ranging from 0.00 to 0.12 (likely million tons), annual catch levels from 0 to 1.5 billion individuals, fishing mortality (F) for years 1990-2020, and recruitment (Rec) data across the same period, with the x-axis representing years on an unusual scale up to 160,000. The visualization illustrates relationships between reproductive biomass, harvest levels, fishing pressure, and population replenishment, enabling assessment of trade-offs between conservation goals (maintaining SSB) and fishery targets (sustaining catches) under different management scenarios in Antarctic krill fisheries.
+
+
+```{r mainvar , message=FALSE,warning=FALSE,fig.height=6,fig.width=8, fig.cap = paste0("Seasonal  stock trajectories") }
 plot(stk,
      metrics=list(SSB=function(x)unitSums(ssb(x)[,,,1]),
                   F=function(x)fbar(x),
@@ -171,13 +206,11 @@ plot(stk,
              scales="free_y")
 ```
 
-\pagebreak
-
 ## Plot SS3 Stock Dynamics
 
+Figure \@ref(fig:trayec)
 
-```{r fig1.1.2, fig.height=7,fig.width=7, fig.cap = paste0("Stock assessment trajectories at age")}
-
+```{r trayec, fig.height=5,fig.width=7, fig.cap = paste0("Stock assessment trajectories at age")}
 plotdyn(stk)+
   theme_bw()+
   scale_color_viridis_d(option="G")
@@ -185,7 +218,9 @@ plotdyn(stk)+
 
 \newpage 
 
-```{r fig1.1.3, fig.height=6, fig.cap = paste0("Stock biology trajectories at age")}
+Figure \@ref(fig:trayec2)
+
+```{r trayec2, fig.height=5,fig.width=7, fig.cap = paste0("Stock biology trajectories at age")}
 
 plotbioyr(stk)+
   ggtitle(paste0(stk@name))+
@@ -195,7 +230,9 @@ plotbioyr(stk)+
 
 \newpage 
 
-```{r fig1.1.4, fig.height=6, fig.cap = paste0("Annual stock quanties at age")}
+Figure \@ref(fig:trayec3)
+
+```{r trayec3, fig.height=6, fig.cap = paste0("Annual stock quanties at age")}
 plotbioage(stk)+
   theme(legend.position = "none")+
   scale_color_viridis_d(option="G")
@@ -210,9 +247,13 @@ plotbioage(stk)+
 set.seed(123)
 ```
 
-Get bias adjusted recruitment deviations from ss3 model
+Get bias adjusted recruitment deviations from ss3 model.
 
-Simplify to annual sex-structured model
+The first code block processes recruitment deviations from an SS3 model output, applying bias adjustment to account for log-normal error structure. It then simplifies a seasonal stock assessment model (`stk`) into an annual, sex-structured format (`stka`) by aggregating seasonal data using weighted averages. If the original stock has multiple seasons, it converts the stock-recruitment relationship (`sr`) into an annual version (`sra`), ensuring compatibility with the simplified model. This step is crucial for MSE as it reduces computational complexity while preserving key biological dynamics.  
+
+The second block extracts predicted recruitment (`pred_recr`) and bias-adjusted deviations from the SS3 output, converting them into an `FLQuant` object for use in FLR (Fisheries Library in R). The recruitment deviations are adjusted by subtracting bias and accounting for process error (`sigR`). If the stock is sex-structured (two units: F/M), the recruitment values are expanded accordingly. This ensures that recruitment variability is realistically incorporated into projections, maintaining the stock’s sex-specific dynamics when required.  
+
+The third block performs forward simulations (`fwd`) to test the stock’s response under two management scenarios: (1) fixed catch (`testC`) and (2) fixed fishing mortality (`testF`). These projections use the adjusted recruitment (`recs`) and apply historical catch or F levels (excluding the first year to avoid initialization bias). This step evaluates how the stock would perform under different harvest strategies, a core component of MSE to compare trade-offs between yield and sustainability. The results help assess whether the model behaves as expected before full MSE simulations are run.
 
 ```{r}
 if(dims(stk)$season>1){
@@ -256,6 +297,9 @@ testF = fwd(stka, sr=recs[,ac(yrs[-1])],
   quant="fbar"))
 ```
 
+Figure \@ref(fig:hc1) generates a comparative diagnostic plot of three key model outputs—the original SS3-derived operating model (`ss3om=stka`), a catch-constrained forward projection (`backtestC=testC`), and an F-constrained projection (`backtestF=testF`)—to validate model consistency and performance before full MSE implementation. By comparing trajectories, this visualization helps identify potential structural mismatches (e.g., recruitment deviations, unrealistic biomass declines under catch limits) and ensures the simplified, sex-structured OM reliably replicates expected dynamics under different management scenarios, serving as a critical pre-MSE quality check to confirm the model's robustness for subsequent strategy evaluations.
+
+
 ```{r hc1, message=FALSE,warning=FALSE,fig.width=9,fig.height=7, fig.cap = paste0("Comparison of stock trajectories from ss3om and a backtest under the same Fbar") }
 
 plot(window(FLStocks(ss3om=stka,
@@ -265,9 +309,13 @@ plot(window(FLStocks(ss3om=stka,
   facet_wrap(~qname,scale="free_y")
 ```
 
-Note that minor deviations are likely due to difficulties in precisely adjusting the rec devs with bias correction.
+(Note that minor deviations are likely due to difficulties in precisely adjusting the rec devs with bias correction)
 
-## Estimate candidate reference points
+## Estimate candidate reference points in krill fishery
+
+Now, we obtain key biological reference points for krill fishery management, using outputs from an SS3 stock assessment model (stored in `out`). First, it calculates recruitment deviations (`maindevs`) and their autocorrelation (`rho`) along with process error (`sigmaR`). 
+
+For MSY-based reference points, it extracts virgin SSB (unfished biomass) and scales it to estimate `Bmsy` (75% of virgin SSB), while `Fmsy` is taken either as a fixed low value (0.001) or derived from first F (e.g., `F_1997`) like assumtion of virginal condition. MSY is obtained directly from SS3 output, along with relative biomass (`B_MSY/SSB_unfished`). Uncertainty is quantified via CVs for SSB and F in the assessment year. The tuning grid defines precautionary thresholds: Blim, Bpa, and Btrigger are set at 20% of virgin SSB, while Feq (equilibrium F) uses recent fishery levels (F_2020) or a fixed value (0.018). The note highlights a discrepancy where the SS3-derived Fmsy (0.001) is lower than the empirical Feq (0.018), suggesting that the harvest control rule may be conservatively restricting fishing pressure below Btrigger, keeping realized F lower than the theoretical MSY level. These reference points form the basis for evaluating management strategies in subsequent MSE runs.
 
 ```{r}
 # Main recdevs
@@ -298,8 +346,6 @@ Fcv <- out$derived_quants$StdDev[out$derived_quants$Label==paste0("F_",ay)]/
 
 # Tuning grid
 
-Specify EQSIM (References Points from SS3 Krill model) outputs
-
 ```{r}
 #Blim=145000
 Blim <- out$derived_quants$Value[out$derived_quants$Label=="SSB_Virgin"]*0.20
@@ -322,7 +368,7 @@ Fp05.eq =0.018
 # [1] 0.018
 ```
 
-Note that in this case the "true" $F_{MSY}$ as the property of the model is smaller than the $F_{MSY}$ derived from EQsim. This may be explained by the presence of the harvest control rule resulting in effective taking place, on average, below Btrigger.
+> Note that in this case the "true" $F_{MSY}$ as the property of the model is smaller than the $F_{MSY}$ derived from `EQsim`. This may be explained by the presence of the harvest control rule resulting in effective taking place, on average, below Btrigger.
 
 ```{r}
 Fmsy # SS3
@@ -332,7 +378,7 @@ Feq
 Function to find $B$ for $F$ at equilibrium
 
 ```{r}
-fwdB4F = function(stock,sr,Fs=0.2,nfy=100){
+fwdB4F = function(stock,sr,Fs=0.2,nfy=30){
     if (class(stock) == "FLStockR") {
       stock = as(stock, "FLStock")
     }
@@ -350,7 +396,23 @@ fwdB4F = function(stock,sr,Fs=0.2,nfy=100){
 
 ```
 
+This function `fwdB4F` calculates the equilibrium biomass (B) corresponding to specific fishing mortality (F) levels for a krill stock. It works by:
 
+1. Converting the input stock to a standard `FLStock` object if needed
+2. Projecting the stock forward for 100 years (default) using the stock-recruitment relationship (sr)
+3. Applying constant F values (default F=0.2) throughout the projection period
+4. Returning the final equilibrium SSB (spawning stock biomass) reached under each F level
+
+Key features:
+- Uses FLR's forward projection (fwd) with fixed F control
+- Handles multiple F values simultaneously via lapply
+- Returns a dataframe linking each F value to its resulting equilibrium B
+- Particularly useful for:
+  - Deriving F vs B curves
+  - Finding biological reference points
+  - Testing equilibrium conditions in management strategy evaluation
+
+The function essentially answers: "What long-term biomass level would this stock stabilize at if we fished it constantly at F=X?" This is fundamental for understanding stock dynamics and setting sustainable harvest levels.
 
 ```{r}
 
@@ -366,7 +428,7 @@ Ftgt
 Bftgt = fwdB4F(stka,
                sra,
                Fs=Ftgt,
-               nfy=200)
+               nfy=30)
 Bftgt
 ```
 
