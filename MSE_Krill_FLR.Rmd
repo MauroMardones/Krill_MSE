@@ -66,8 +66,6 @@ sr <- FLSR(params = params(stk_par),
 model(sr)
 params(sr)
 ```
-
-
 ```{r}
 sr <- as.FLSR(stk, model = "segreg") # create FLSR
 sr <- fmle(sr) # fit model
