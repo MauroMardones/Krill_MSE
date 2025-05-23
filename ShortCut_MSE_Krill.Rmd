@@ -72,11 +72,7 @@ By adopting this approach, the study provides a transparent and policy-relevant 
 All model code process and simulation tools will made openly available to the scientific community, encouraging transparency, reproducibility, and constructive feedback to refine and strengthen this approach through collaborative development.
 
 
-
-Load packages
-
-
-```{r, message=FALSE,warning=FALSE}
+```{r, echo=FALSE, message=FALSE,warning=FALSE}
 # Load
 library(ggplot2)
 library(FLCore)
@@ -246,7 +242,7 @@ Figure \@ref(fig:trayec)
 ```{r trayec, fig.height=5,fig.width=7, fig.cap = paste0("Stock assessment trajectories at age")}
 plotdyn(stk)+
   theme_bw()+
-  scale_color_viridis_d(option="G")
+  scale_color_viridis_d(option="E")
 ```
 
 \newpage 
@@ -257,7 +253,7 @@ Figure \@ref(fig:trayec2)
 
 plotbioyr(stk)+
   ggtitle(paste0(stk@name))+
-  scale_color_viridis_d(option="G")
+  scale_color_viridis_d(option="E")
 
 ```
 
@@ -268,7 +264,7 @@ Figure \@ref(fig:trayec3)
 ```{r trayec3, fig.height=6, fig.cap = paste0("Annual stock quanties at age")}
 plotbioage(stk)+
   theme(legend.position = "none")+
-  scale_color_viridis_d(option="G")
+  scale_color_viridis_d(option="E")
 ```
 
 \pagebreak
@@ -353,7 +349,7 @@ For MSY-based reference points, it extracts virgin SSB (unfished biomass) and sc
 ```{r}
 # Main recdevs
 recyrs = recruit$Yr[recruit$era =="Main"]
-maindevs = unitSums(residuals[,ac(recyrs)])
+maindevs = unitSums(residuals[,ac(recyrs)])*2
 rho = cor(maindevs [,-1],maindevs [,-length(maindevs)])
 sigmaR = out$sigma_R_in
 
@@ -718,7 +714,7 @@ om <- fwdWindow(om,
                 end=fy)
 ```
 
-Next, a so called observation error is constructed. In the case of the short-cut MSE, it simply holds the "perfect" stock information. For a full MSE with inbuilt estimation model  it would also generate the observations with errors, such a catch-at-age and survey numbers at age for SAM or a4a, or biomass surveys indices and catches for SPiCT or JABBA.  
+> Next, a so called observation error is constructed. In the case of the short-cut MSE, it simply holds the "perfect" stock information. For a full MSE with inbuilt estimation model  it would also generate the observations with errors, such a catch-at-age and survey numbers at age for SAM or a4a, or biomass surveys indices and catches for SPiCT or JABBA.  
 
 ```{r tidy=FALSE}
 oem <- FLoem(
@@ -739,7 +735,6 @@ sdevs <- shortcut_devs(om,
                        Fcv=spars["Fcv"], 
                        Fphi=0.5, 
                        SSBcv=spars["SSBcv"])
-
 ```
 
 Finally, the implementation error module `iem` is setup. In this case, with a random catch implementation error of 10%.
@@ -798,6 +793,28 @@ load(file="rdata/flom.sbr.rda")
 
 This can be effectively implemented ICES advice rule hockey-stick by setting the $B_{trigger}$ to zero, using the `icesControl` function. This function can also take the `SSBdevs` and `Fdevs` that implement the deviations from the SSB and F with aim to account for assessment errors.
 
+
+### `shortcut.sa2()` function description
+
+The function `shortcut.sa2()`is a simple implementation of a stock assessment shortcut rule. It generates an index (ind) based on spawning stock biomass (SSB), adjusted by a set of deviates (SSBdevs) over a given time window. This index is then used to update the tracking object to reflect convergence for the assessment year (`ay`).
+
+
+\[
+\texttt{ind}_{\text{SSB}}(y) = \left( \sum_{i} \text{SSB}_i(y) \right) \times W(y; y_0, \Delta y)
+\]
+
+where :
+
+- $\sum_{i} \text{SSB}_i(y)$ representa la suma de SSB sobre todas las unidades
+- $W(y; y_0, \Delta y)$ es una función de ventana centrada en $y_0$ con ancho $\Delta y$
+
+and follow convergency
+
+\[
+\texttt{tracking}_{\text{conv.est}}(\text{ay}) = 1
+\]
+
+
 ```{r}
 shortcut.sa2 <- function(stk, 
                          idx, 
@@ -825,7 +842,61 @@ shortcut.sa2 <- function(stk,
 
   list(stk=stk, ind=ind, tracking=tracking)
 }
+```
 
+### `TAC.IS2` Function Description
+
+This function implements an **Interim Setting (IS) TAC (Total Allowable Catch) rule** for fisheries management, combining short-term forecasting with decision rules to set catch limits based on stock status.
+
+
+The geometric mean recruitment is computed over selected years:
+\[
+\overline{R} = \exp\left(\text{yearMeans}\left(\log\left(\sum_{\text{units}} R_{y}\right)\right)\right), \quad y \in \text{recyrs}
+\]
+where:
+- \( R_y \) = recruitment in year \( y \)
+- `recyrs` = specified years (all series)
+
+The target \( F \) is adjusted by deviations (`Fdevs`):
+\[
+F_{\text{target}} = F_{\text{ref}} \times \delta_F
+\]
+where:
+- \( F_{\text{ref}} \) = reference \( F \) from `ctrl`
+- \( \delta_F \) = deviation multiplier (default = 1)
+
+The final TAC is bounded by interannual change limits:
+\[
+\text{TAC}_{\text{final}} = 
+\begin{cases}
+\min(\text{TAC}_{\text{projected}}, \text{TAC}_{\text{prev}} \times \delta_{\text{upp}}}), & \text{if } \delta_{\text{upp}} \text{ specified} \\
+\max(\text{TAC}_{\text{projected}}, \text{TAC}_{\text{prev}} \times \delta_{\text{low}}}), & \text{if } \delta_{\text{low}} \text{ specified} \\
+\text{TAC}_{\text{projected}}, & \text{otherwise}
+\end{cases}
+\]
+where:
+- \( \delta_{\text{upp}} \) = upper bound (e.g., 1.2 = +20% max increase)
+- \( \delta_{\text{low}} \) = lower bound (e.g., 0.8 = -20% max decrease)
+
+
+The stock is projected using:
+\[
+N_{y+1} = N_y e^{-Z_y} + R_{y+1}
+\]
+\[
+C_y = \frac{F_y}{Z_y} (1 - e^{-Z_y}) N_y
+\]
+where:
+- \( N \) = population numbers
+- \( Z = F + M \) (total mortality)
+- \( C \) = catch
+
+
+This function is useful for interim catch settings in fisheries where full assessments are not available annually. It ensures gradual TAC adjustments while accounting for recent recruitment trends.
+
+
+```{r eval=FALSE, echo=FALSE}
+# TAC from HW
 tac.is2 <- function(stk, 
                     ctrl,
                     args, 
@@ -965,6 +1036,130 @@ tac.is2 <- function(stk,
 }
 ```
 
+
+```{r eval=TRUE, echo=FALSE}
+# TAK with all recruit series ad hoc (Made with AI)
+tac.is2 <- function(stk, 
+                    ctrl,
+                    args, 
+                    output = "catch",
+                    recyrs = "all",  # Changed default to use all years
+                    Fdevs = unitMeans(fbar(fut)) %=% 1, 
+                    dtaclow = NA, 
+                    dtacupp = NA, 
+                    fmin = 0, 
+                    reuse = TRUE,
+                    initac = metrics(stk, output)[, ac(iy - 1)], 
+                    tracking) { 
+  
+  # EXTRACT arguments
+  spread(args)
+  
+  # SET control years
+  cys <- seq(ay + management_lag, ay + management_lag + frq - 1)
+  
+  # PREPARE stock for projection
+  fut <- fwdWindow(stk, end = cys[length(cys)], nsq = nsqy)
+  
+  # HANDLE recruitment years specification
+  if (identical(recyrs, "all")) {
+    # Use all available years in the stock
+    recyrs <- dimnames(stk)$year
+  } else if (is.numeric(recyrs)) {
+    # Convert negative indices to positive year references
+    all_years <- dimnames(stk)$year
+    if (all(recyrs < 0)) {
+      recyrs <- tail(all_years, n = abs(recyrs[1]))
+    } else {
+      recyrs <- all_years[recyrs]
+    }
+  }
+  
+  # VALIDATE recruitment years
+  if (!all(recyrs %in% dimnames(stk)$year)) {
+    stop("Specified recruitment years not found in stock object")
+  }
+  
+  # CALCULATE geometric mean recruitment across all selected years
+  gmnrec <- exp(mean(log(unitSums(rec(stk)[, recyrs])), na.rm = TRUE))
+  
+  # SETUP stock-recruitment relationship (constant mean recruitment)
+  srr <- predictModel(model = rec ~ a, params = FLPar(a = c(gmnrec)))
+  
+  # STORE geometric mean recruitment in tracking
+  track(tracking, "gmrec.isys", ay + management_lag) <- gmnrec
+  
+  # SET target F values
+  if (isTRUE(reuse) | toupper(reuse) == 'F') {
+    ftar <- rep(ctrl[1, ]$value * Fdevs[, ac(cys[1])], length(cys))
+  } else {
+    ftar <- c(ctrl$value * Fdevs[, ac(cys)])
+  }
+  
+  # TRACK target F values
+  track(tracking, "fbar.isys", cys) <- ftar
+  
+  # HANDLE management lag
+  if (management_lag > 0) {
+    fsq <- unitMeans(fbar(stk))[, ac(dy)]
+    
+    fctrl <- fwdControl(
+      list(
+        year = seq(ay - data_lag + 1, length = management_lag),
+        quant = "fbar", 
+        value = rep(fsq, management_lag)
+      ),
+      list(
+        year = cys, 
+        quant = "fbar", 
+        value = ftar
+      )
+    )
+  } else {
+    fctrl <- fwdControl(
+      list(
+        year = ay + management_lag, 
+        quant = "fbar", 
+        value = ftar
+      )
+    )
+  }
+  
+  # RUN forward projection
+  fut <- ffwd(fut, sr = srr, control = fctrl)
+  
+  # IDENTIFY valid iterations
+  id <- c(tracking[[1]]["decision.hcr", ac(ay)] > 2) &
+    c(unitMeans(fbar(fut))[, ac(ay + management_lag)] > fmin)
+  
+  # EXTRACT catches
+  if (isTRUE(reuse) | toupper(reuse) == "C") {
+    TAC <- expand(unitSums(catch(fut))[, ac(cys)[1]], year = seq(length(cys)))
+  } else {
+    TAC <- unitSums(catch(fut))[, ac(cys)]
+  }
+  
+  # GET previous TAC
+  prev_tac <- if (ay == iy) rep(initac, length = args$it) else c(tracking[[1]]["isys", ac(ay)])
+  
+  # APPLY TAC constraints
+  if (!is.na(dtacupp)) iter(TAC, id) <- pmin(c(iter(TAC, id)), prev_tac[id] * dtacupp)
+  if (!is.na(dtaclow)) iter(TAC, id) <- pmax(c(iter(TAC, id)), prev_tac[id] * dtaclow)
+  
+  # CONSTRUCT final control object
+  ctrl <- fwdControl(lapply(seq(length(cys)), function(x) {
+    list(
+      year = cys[x], 
+      quant = output, 
+      value = TAC[, x]
+    )
+  }))
+  
+  return(list(ctrl = ctrl, tracking = tracking))
+}
+```
+
+
 However, these rules originate from ICES; for krill, we will test the fixed quota catch rule for subarea 48.1, which is set at 145,000 tonnes, using the following arrangement:
 
 ```{r eval=FALSE}
@@ -1019,9 +1214,6 @@ arule <- mpCtrl(list(
   isys = mseCtrl(method=tac.is,
     args=list(recyrs=-2, fmin=0, Fdevs=sdevs$F))
   ))
-
-
-
 ```
 
 
@@ -1249,7 +1441,7 @@ The same settings can be specified for the new `mps` function in `mse`, which al
 
 The function `combinations` enables to vary more than one parameter at the time. 
 
-```{r}
+```{r eval=FALSE}
 hcrs =combinations(target=Fadv,
                    trigger=0)
 hcrs$trigger = Btri # Overwrite
@@ -1266,7 +1458,7 @@ save(om,
 
 These changes in parameters can simply be passed on to the existing `arule` to run the variations with `mps`.  
 
-```{r,eval=FALSE,warning=FALSE, echo=TRUE}
+```{r eval=FALSE,warning=FALSE, echo=TRUE}
 #(dont run in krill!!!)
 runs <- mps(om, 
             oem=oem,
@@ -1525,19 +1717,29 @@ This Figure \@ref(fig:plotlt) show the long-term performance metrics evaluation.
 
 
 ```{r plotlt, fig.height=6,fig.width=7,warning=FALSE,message=FALSE, fig.cap = paste0("Performance: Long-term performance evaluation")}
-
-library(RColorBrewer)
 ncol = length(unique(perf$mp)) 
 pbp = plotBPs(perf,
-statistics=c("a.medianFmsy","b.medianBmsy","c.medianCmsy", "d.aavC", "e.riskBlim", "f.P80BMSY"), 
-size=3, target = c(a.medianFmsy=1,b.medianBmsy=1, c.medianCmsy=1,g.P80BMSY=0.8),
-limit= c(e.riskBlim=0.05,c.medianCmsy=0.95),
-yminmax = c(0.05, 0.95))+theme_bw()+
-facet_wrap(~name,scales = "free_y",ncol=2)+
-ggtitle(paste0("Performance: Reference Points"))+
-ylab("Performance statistics")+
-scale_fill_manual(values = brewer.pal(ncol, "Set3"))+
-theme(axis.text.x=element_blank())+xlab("Candidates")+ 
+              statistics=c("a.medianFmsy",
+                           "b.medianBmsy",
+                           "c.medianCmsy",
+                           "d.aavC", 
+                           "e.riskBlim", 
+                           "f.P80BMSY"), 
+              size=3, 
+              target = c(a.medianFmsy=1,
+                         b.medianBmsy=1, 
+                         c.medianCmsy=1,
+                         g.P80BMSY=0.8),
+           limit= c(e.riskBlim=0.05,
+                    c.medianCmsy=0.95),
+           yminmax = c(0.05, 0.95))+
+  theme_bw()+
+  facet_wrap(~name,scales = "free_y",ncol=2)+
+  ggtitle(paste0("Performance: Reference Points"))+
+  ylab("Performance statistics")+
+  scale_fill_manual(values = brewer.pal(ncol, "Set3"))+
+  theme(axis.text.x=element_blank())+
+  xlab("Candidates")+ 
   guides(fill= guide_legend(ncol = 1))
 pbp
 
