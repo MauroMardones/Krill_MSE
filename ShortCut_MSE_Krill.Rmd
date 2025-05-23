@@ -151,6 +151,7 @@ opportunity and risk:
 + $B_{trigger}$: biomass trigger point of the HCR, specified as change point of biomass below which fishing mortality reduced relative to Ftgt. Btrigger is typically specified as ratio to $B_{MSY}$.
 
 
+\pagebreak
 
 # METHODOLOGY
 
@@ -797,9 +798,6 @@ load(file="rdata/flom.sbr.rda")
 
 This can be effectively implemented ICES advice rule hockey-stick by setting the $B_{trigger}$ to zero, using the `icesControl` function. This function can also take the `SSBdevs` and `Fdevs` that implement the deviations from the SSB and F with aim to account for assessment errors.
 
-
-Adjusted mse controls for sex-structured stocks
-
 ```{r}
 shortcut.sa2 <- function(stk, 
                          idx, 
@@ -827,27 +825,6 @@ shortcut.sa2 <- function(stk,
 
   list(stk=stk, ind=ind, tracking=tracking)
 }
-
-
-# testing for krill fixed TAC
-# fixedTAC_rule <- function(stk, ctrl, args, output="catch", tracking) {
-#   # Extraer año actual (ay) y año de implementación (iy)
-#   ay <- args$ay
-#   iy <- args$iy
-#   
-#   # Definir la cuota fija (ejemplo: promedio histórico de capturas)
-#   fixed_TAC <- mean(catch(stk)[, ac((iy-10):(iy-1))])  # Últimos 10 años
-#   
-#   # Crear control para aplicar el TAC fijo
-#   ctrl <- fwdControl(
-#     list(year = iy, quant = "catch", value = fixed_TAC)
-#   )
-#   
-#   # Registrar el TAC en tracking (opcional)
-#   track(tracking, "fixed_TAC", ay) <- fixed_TAC
-#   
-#   return(list(ctrl = ctrl, tracking = tracking))
-# }
 
 tac.is2 <- function(stk, 
                     ctrl,
@@ -986,8 +963,38 @@ tac.is2 <- function(stk,
     
   return(list(ctrl=ctrl, tracking=tracking))
 }
+```
+
+However, these rules originate from ICES; for krill, we will test the fixed quota catch rule for subarea 48.1, which is set at 145,000 tonnes, using the following arrangement:
+
+```{r eval=FALSE}
+fixedTAC_hcr <- function(stk, ctrl, args, tracking) {
+  # Obtener número de iteraciones del stock de entrada
+  niter <- dims(stk)$iter
+  
+  # Crear FLQuant con dimensiones correctas
+  tac <- FLQuant(145000,
+                dimnames = list(year = args$iy,
+                               iter = 1:niter))
+  
+  # Crear control asegurando compatibilidad
+  ctrl <- fwdControl(
+    data.frame(
+      year = args$iy,
+      quant = "catch",
+      value = c(tac),
+      iter = 1:niter)
+  )
+  
+  return(list(ctrl = ctrl, tracking = tracking))
+}
 
 ```
+
+
+
+
+
 
 The next code configures a three-step Management Procedure (MP) using the `mpCtrl` framework for krill MSE testing:  
 
@@ -1014,7 +1021,20 @@ arule <- mpCtrl(list(
   ))
 
 
+
 ```
+
+
+```{r eval=FALSE}
+#para krill
+# Configurar el mpCtrl con la nueva regla
+arule_fixedTAC <- mpCtrl(list(
+  est = mseCtrl(method = shortcut.sa),  # Método de evaluación (sin cambios)
+  hcr = mseCtrl(method = fixedTAC_hcr), # Nueva regla de TAC fijo
+  isys = mseCtrl(method = tac.is)       # Implementación (sin cambios)
+))
+```
+
 
 This rule can now be run passing on the `om`, `oem` and `arule` and an additional argument to set the implementation year to 2020.
 
@@ -1073,8 +1093,31 @@ run <- mp(om,
 )
 
 mp.fixexFmsy = run@om@stock
-
 ```
+
+
+```{r eval=FALSE}
+#testing krill TAC fixed
+# 2. Configurar MSE
+mseargs <- list(
+  iy = 2030,
+  fy = 2035,
+  frq = 1,
+  management_lag = 1,
+  data_lag = 1
+)
+
+# 3. Ejecutar
+run_fixed <- mp(
+  om = om,
+  oem = oem,
+  ctrl = arule_fixedTAC,
+  args = mseargs,
+  parallel = TRUE
+)
+```
+
+\pagebreak
 
 # RESULTS
 
@@ -1172,7 +1215,7 @@ Figure \@ref(fig:hockey) the convential hockey-stick control rule is explored wi
 ```
 Figure \@ref(fig:alternative)  show alternative HCR formulations
 
-```{r alternative, fig.height=8,fig.width=4,warning=FALSE,message=FALSE, fig.cap = paste0("Alternative HCR formulations, with $F_{min}=0$ (top) and $F_{min}=0.5F_{tgt}$ (bottom) under different $F_{adv}$ options set at $F_{adv}=F_{adv}$, $F_{adv}=0.8F_{adv}$ and at $F_{adv}=0.7F_{adv}$ from left to right")}
+```{r alternative, fig.height=8,fig.width=8,warning=FALSE,message=FALSE, fig.cap = paste0("Alternative HCR formulations, with $F_{min}=0$ (top) and $F_{min}=0.5F_{tgt}$ (bottom) under different $F_{adv}$ options set at $F_{adv}=F_{adv}$, $F_{adv}=0.8F_{adv}$ and at $F_{adv}=0.7F_{adv}$ from left to right")}
 
 Fadv = c(df$Ftgt) 
 Btgt = c(df$Btgt) 
@@ -1197,8 +1240,8 @@ y=Btri,
 z=Btgt)
 # plot ggplot list
 ggarrange(plotlist=hcrs,
-          nrow=6,
-          ncol=2)
+          nrow=4,
+          ncol=4)
 
 ```
 
@@ -1210,8 +1253,7 @@ The function `combinations` enables to vary more than one parameter at the time.
 hcrs =combinations(target=Fadv,
                    trigger=0)
 hcrs$trigger = Btri # Overwrite
-hcrs
-
+#hcrs
 save(om,
      oem,
      arule,
@@ -1224,7 +1266,7 @@ save(om,
 
 These changes in parameters can simply be passed on to the existing `arule` to run the variations with `mps`.  
 
-```{r,eval=FALSE,warning=FALSE, echo=FALSE}
+```{r,eval=FALSE,warning=FALSE, echo=TRUE}
 #(dont run in krill!!!)
 runs <- mps(om, 
             oem=oem,
@@ -1309,7 +1351,7 @@ Each strategy implements a different constant `Feq` ranging from 0.1 to 1.0. As 
 
 
 
-```{r warning=FALSE, fig.height=5,fig.width=5,warning=FALSE,message=FALSE, fig.cap = "Comparison of population and fishery trajectories from 2020 to 2030 under different harvest control rules. Scenarios vary by fishing mortality targets (`Feq`) and biomass trigger levels (`Btri.eq`). Panels show recruitment (top left), spawning stock biomass (top right), fishing mortality (bottom left), and catches (bottom right). Reference points (`R0`, `B0`, `Bmsy`, `Blim`, `Btrigger`, etc.) are indicated. Results illustrate the trade-offs between yield and conservation risk under different management strategies."}
+```{r compare, warning=FALSE, fig.height=7,fig.width=9, warning=FALSE,message=FALSE, fig.cap = "Comparison of population and fishery trajectories from 2020 to 2030 under different harvest control rules. Scenarios vary by fishing mortality targets (`Feq`) and biomass trigger levels (`Btri.eq`). Panels show recruitment (top left), spawning stock biomass (top right), fishing mortality (bottom left), and catches (bottom right). Reference points (`R0`, `B0`, `Bmsy`, `Blim`, `Btrigger`, etc.) are indicated. Results illustrate the trade-offs between yield and conservation risk under different management strategies."}
 
 nfs = length(df$Tune[-1])
 tri = c(rep(".Btri.eq",
@@ -1395,7 +1437,7 @@ save(pstks,
 ```
 
 
-```{r, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Median MSE forecast horizon under a fixed $F_{tgt}$ rule and 6 HCR scenarios")}
+```{r, fig.height=7,fig.width=9, warning=FALSE,message=FALSE, fig.cap = paste0("Median MSE forecast horizon under a fixed $F_{tgt}$ rule and 6 HCR scenarios")}
 
 medstks = FLStocks(lapply(stks,function(x){
   stockMedians(x)
@@ -1484,6 +1526,7 @@ This Figure \@ref(fig:plotlt) show the long-term performance metrics evaluation.
 
 ```{r plotlt, fig.height=6,fig.width=7,warning=FALSE,message=FALSE, fig.cap = paste0("Performance: Long-term performance evaluation")}
 
+library(RColorBrewer)
 ncol = length(unique(perf$mp)) 
 pbp = plotBPs(perf,
 statistics=c("a.medianFmsy","b.medianBmsy","c.medianCmsy", "d.aavC", "e.riskBlim", "f.P80BMSY"), 
@@ -1493,8 +1536,9 @@ yminmax = c(0.05, 0.95))+theme_bw()+
 facet_wrap(~name,scales = "free_y",ncol=2)+
 ggtitle(paste0("Performance: Reference Points"))+
 ylab("Performance statistics")+
-scale_fill_manual(values=ss3col(ncol))+ # USE FLRef::ss3col
-theme(axis.text.x=element_blank())+xlab("Candidates")+ guides(fill= guide_legend(ncol = 1))
+scale_fill_manual(values = brewer.pal(ncol, "Set3"))+
+theme(axis.text.x=element_blank())+xlab("Candidates")+ 
+  guides(fill= guide_legend(ncol = 1))
 pbp
 
 ```
@@ -1531,11 +1575,10 @@ kbl(tab.pf, format = "latex", booktabs = TRUE, align = "lccccc",
 ```
 
 
-\pagebreak
 
 
 
-```{r eval=FALSE, fig5, fig.height=8,fig.width=10, fig.cap = paste0("MSE kobe plot Advice rules"), warning=FALSE}
+```{r fig5, eval=FALSE, echo=FALSE, fig.height=8,fig.width=10, fig.cap = paste0("MSE kobe plot Advice rules"), warning=FALSE}
 ## MSE kobe plot
 kbcex =function(){theme(plot.title = element_text(size=10),
                         legend.key.size = unit(0.3, 'cm'), #change legend key size
@@ -1544,10 +1587,14 @@ kbcex =function(){theme(plot.title = element_text(size=10),
                         legend.text = element_text(size=10)) #change legend text font size
 }
 kobeMPs(perf,y="a.medianFmsy", x="b.medianBmsy")+
-  ylab(expression(F/F[MSY]))+xlab(expression(B/B[MSY]))+ylim(0,2.5)+kbcex()+theme()+guides(fill= guide_legend(ncol = 1))
+  ylab(expression(F/F[MSY]))+
+  xlab(expression(B/B[MSY]))+
+  ylim(0,2.5)+kbcex()+theme()+
+  guides(fill= guide_legend(ncol = 1))
 
 ```
 
+\pagebreak
 
 # CONCLUSION
 
