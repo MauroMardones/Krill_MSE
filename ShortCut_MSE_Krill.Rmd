@@ -27,7 +27,7 @@ header-includes:
 \selectfont
 ```
 
-```{r setup, include=FALSE, message=F}
+```{r  setup, eval=FALSE, include=FALSE, message=F}
 rm(list = ls())
 options(bitmapType = "cairo") 
 #XQuartz is a mess, put this in your onload to default to cairo instead (https://github.com/tidyverse/ggplot2/issues/2655)
@@ -36,7 +36,7 @@ options(bitmapType = "cairo")
 ```
 
 
-```{r setup, echo = FALSE, warning = FALSE, message = FALSE}
+```{r setup2, echo = FALSE, warning = FALSE, message = FALSE}
 library(knitr)
 opts_chunk$set(
   collapse = TRUE,
@@ -92,7 +92,7 @@ library(ss3sim)
 library(kableExtra)
 ```
 
-# Short-Cut MSE for Harvest Control Rule (HCR) in krill 
+## Short-Cut MSE for Harvest Control Rule (HCR) in krill 
 
 
 Different to Management Strategy Evaluation (MSE) simulation design (Punt et al. 2017), the MSE `shortcut` approach omits the step of the annual updating of the estimation model (assessment) in the feedback control. Instead, it emulates an annual update of the benchmark assessment model by passing outcomes ($SSB$ and $F$ or equivalents) from the 'true' age-structured dynamics of the operating model (OM), with assessment error, to the harvest control rule (HCR) and catch implementation system.
@@ -103,13 +103,40 @@ For Antarctic krill in the Western Antarctic Peninsula (WAP), the implementation
 
 The goal of this application is to test the robustness of the current harvest control rule used by CCAMLR for krill, which consists of a fixed TAC of 145,000 tonnes per year. The shortcut MSE approach facilitates this by reducing computational complexity and avoiding the need for annual full assessments, while still capturing feedback effects between advice and stock dynamics. Here, the MSE short-cut approach is implemented using the tools available in the Fisheries Library for R (FLR; Kell et al., 2007; [FLR Library](https://flr-project.org/) 
 
+## Software Implementation
+
+This analysis was conducted using R version `r R.version$major`.`r R.version$minor` [@R-base] with the following key packages:
+
+1. Core MSE Framework: 
+   - FLR ecosystem [@FLCore; @FLBRP] 
+   - `mse` package [@mse-pkg] for management procedure evaluation
+
+2. Stock Assessment:
+   - SS3 integration via `r4ss` [@r4ss]
+   - Simulation testing with `ss3sim` [@ss3sim]
+
+3. Visualization & Reporting:
+   - `ggplot2` [@ggplot2] for graphics
+   - `kableExtra` [@kableExtra] for publication-ready tables
+
+```{r package-versions, echo=FALSE, results='asis'}
+pkgs <- c("FLCore", "mse", "FLBRP", "r4ss", "ss3sim", "ggplot2", "kableExtra")
+vers <- sapply(pkgs, function(x) as.character(packageVersion(x)))
+
+knitr::kable(
+  data.frame(Package = pkgs, Version = vers),
+  caption = "Key package versions used in analysis",
+  booktabs = TRUE
+) %>% kableExtra::kable_styling(latex_options = "hold_position")
+```
+
+
 
 ## Glossary
 
 The following glossary summarizes key HCR parameters and associated target and limit reference points
 that are considered for tuning the candidate HCRs to optimise the trade-offs between maximising fishing
 opportunity and risk:
-
 
 + $F_{MSY}$: target reference point for fishing mortality at Fmsy (or its proxy), (e.g. $F_{first year}$)
 
@@ -122,6 +149,7 @@ opportunity and risk:
 + $C_{adv}$: advised catch as output of the management procedure 
 
 + $B_{trigger}$: biomass trigger point of the HCR, specified as change point of biomass below which fishing mortality reduced relative to Ftgt. Btrigger is typically specified as ratio to $B_{MSY}$.
+
 
 
 # METHODOLOGY
@@ -154,6 +182,10 @@ This code block initiates the setup of the operating model by reading and simpli
 ```{r, eval=FALSE}
 run = "krill.stock.wAP"
 load(file=file.path("rdata",paste0(run,".rdata")),verbose = T)
+```
+
+
+```{r}
 stka = stk
 ```
 
@@ -415,7 +447,6 @@ The function essentially answers: *"What long-term biomass level would this stoc
 This quiestion is fundamental for understanding stock dynamics and setting (or testing) sustainable harvest levels o krill
 
 ```{r}
-
 Fx = c(rev(seq(0.1,1,0.1)))
 #Fx = c(rev(seq(0.5,1,0.025)))
 Ftgt = FLPar(c(Fmsy,Fx*Feq),
@@ -449,7 +480,7 @@ This creates a comprehensive set of F targets that will allow testing of:
 
 The resulting `Ftgt` object can then be used in subsequent MSE simulations to evaluate how different fishing pressure levels affect stock sustainability and fishery performance.
 
-```{r,eval=F}
+```{r}
 Bftgt = fwdB4F(stka,
                sra,
                Fs=Ftgt,
@@ -503,20 +534,20 @@ kbl(df,
 
 
 ```{r}
-refpts = FLPar(Fmsy=Fmsy,
-               Feq=Feq,
-               Bmsy=Ftgt.tune["Bmsy.om"],
-               #Beq=Ftgt.tune["Bftgt1"],
-               Beq=Ftgt.tune["Bftgt0.3"], #cambiar de acuerdo al FLpar object
+refpts = FLPar(Fmsy = Fmsy,
+               Feq = Feq,
+               Bmsy = Ftgt.tune["Bmsy.om"],
+               Beq = Ftgt.tune["Bftgt0.3"], 
                Blim = Blim,
-               Bpa=Bpa,
-               Btrigger=Btri.eq,
-               B0=B0,
-               R0=R0)
+               Bpa = Bpa,
+               Btrigger = Btri.eq,
+               B0 = B0,
+               R0 = R0)
+```
 
+
+```{r}
 refpts
-
-
 ```
 
 (CHECK this!!!)
@@ -1045,6 +1076,8 @@ mp.fixexFmsy = run@om@stock
 
 ```
 
+# RESULTS
+
 The Figure \@ref(fig:fig9) demonstrate the population and fishery response of Antarctic krill under different management scenarios from 1990-2030. Recruitment shows high natural variability (0-1.5 billion individuals) without directional trends, while spawning biomass (SB) declined significantly from 3 million units to 1 million between 1990-2010 before stabilizing under management. The fishing mortality (F) trajectory reveals that the fixedFmsy scenario successfully maintained F below 0.03 after 2020 - a substantial reduction from peak historical levels of 0.12 - while still supporting stable catch levels. This suggests the krill stock can sustain moderate catches when managed at Fmsy, as evidenced by the biomass stabilization at about 1-2 million units post-2020 despite the highly variable recruitment. The fixedFmsy approach appears effective at balancing conservation (maintaining SB above precautionary thresholds) and fishery objectives (consistent catches), though the population's inherent recruitment variability remains a key determinant of longer-term sustainability. The parallel trends in catch and biomass under fixedFmsy management indicate the stock may be operating within sustainable limits, though continued monitoring of recruitment-SB relationships would be prudent given the species' ecological importance in Antarctic ecosystems.
 
 The plot compares two management scenarios for Antarctic krill:
@@ -1052,14 +1085,13 @@ The plot compares two management scenarios for Antarctic krill:
 - Status Quo (stock): Shows historical patterns with F reaching 0.12 and biomass declining to ~1 million tons by 2010, reflecting unregulated fishing pressure.
 
 - Fixed Fmsy Management: Demonstrates effective control with:
-F maintained at ≤0.03 after 2020
+F maintained at major o equal 0.03 after 2020
 Biomass stabilized at 1-2 million tons
 Catches sustained without collapse
 Recruitment variability maintained within natural ranges
 
 ```{r fig9, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Initial OM and the MSE forecast horizon under a fixed $F_{tgt}$ rule")}
-
-# make FLStocks from om until 2024 (implementation) and the run 
+# make FLStocks from om until 2020 (implementation) and the run 
 stk.fmsy = FLStocks(stock=window(om@stock,end=dy),
               fixedFmsy=mp.fixexFmsy)
 
@@ -1085,9 +1117,9 @@ runR@refpts=refpts
 
 This allows to quickly evaluate the stock status under a fixed $F_{MSY}$ rule.
 
-It can be seen that despite "perfect" knowledge of the "true" $F_{MSY}$, and fishing pressure is on average $F_{MSY}$, the stock fails to attain biomass levels at $B_{MSY}$ with a relative high risk to fall below $B_{lim}$. This is a well known fact as a result of the lags between data and management and asymetric risks in that exceeding $F_{MSY}$ is more consequential on both $SSB$ and long term yield, then fishing below $F_{MSY}$, In the case of the latter, more biomass is left in the water, which provides increased future reproduction potential and catch opportunity.   
+It can be seen that despite "perfect" knowledge of the "true" $F_{MSY}$, and fishing pressure is on average $F_{MSY}$, the stock fails to attain biomass levels at $B_{MSY}$ with a relative high risk to fall below $B_{lim}$. This is a well known fact as a result of the lags between data and management and asymetric risks in that exceeding $F_{MSY}$ is more consequential on both $SSB$ and long term yield, then fishing below $F_{MSY}$, In the case of the latter, more biomass is left in the water, which provides increased future reproduction potential and catch opportunity (Figure \@ref(fig:statusfi)).   
 
-```{r, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Stock Status under a fixed $F_{tgt}$ short-cut MSE rule")}
+```{r statusfi, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Stock Status under a fixed $F_{tgt}$ short-cut MSE rule")}
 thin = seq(1,it,5)
 plotAdvice(iter(runR,thin))+
      geom_vline(xintercept = c(dy),
@@ -1103,11 +1135,28 @@ plotAdvice(iter(runR,thin))+
 
 Even relatively simplified short-cut MSE frameworks provide a powerful to explore alternative HCRs to achieve better trade-off between risks and yield. 
 
-Here, the convential hockey-stick control rule is explored with different ratios of $F_{adv}$/$F_{tgt}$ and $B_{trigger}$/$B_{tgt}$ settings, where the $B_{trigger}$ promts a linear reduction in $F_{adv}$ if $SSB$ falls below it.
+Figure \@ref(fig:fixed) show the c current control rule based in a contsant catch limit in F asociated
 
 
-```{r , fig.height=5,fig.width=8,warning=FALSE,message=FALSE, fig.cap = paste0("Advice Rule from EQSIM")}
+```{r hfixed, fig.height=3,fig.width=5,warning=FALSE,message=FALSE, fig.cap = paste0("Advice Rule Current in Krill")}
+ plotGFCM(fadv = Feq,
+          btrigger =Btri.eq,
+          bthr = -1,
+          ftgt = Feq,
+          btgt=df$Btgt[2],
+          blim=an(refpts["Blim"]),
+          fmin=Feq,
+          bclose=0,
+          kobe  =FALSE,
+          text=F,
+          rel=F,
+          xmax=2.5)
+```
 
+Figure \@ref(fig:hockey) the convential hockey-stick control rule is explored with different ratios of $F_{adv}$/$F_{tgt}$ and $B_{trigger}$/$B_{tgt}$ settings, where the $B_{trigger}$ promts a linear reduction in $F_{adv}$ if $SSB$ falls below it.
+
+
+```{r hockey, fig.height=3,fig.width=5,warning=FALSE,message=FALSE, fig.cap = paste0("Example Advice Rule from ICES")}
  plotGFCM(fadv = Feq,
           btrigger =Btri.eq,
           bthr = -1,
@@ -1121,9 +1170,9 @@ Here, the convential hockey-stick control rule is explored with different ratios
           rel=F,
           xmax=2.5)
 ```
+Figure \@ref(fig:alternative)  show alternative HCR formulations
 
-
-```{r , fig.height=12,fig.width=8,warning=FALSE,message=FALSE, fig.cap = paste0("Alternative HCR formulations, with $F_{min}=0$ (top) and $F_{min}=0.5F_{tgt}$ (bottom) under different $F_{adv}$ options set at $F_{adv}=F_{adv}$, $F_{adv}=0.8F_{adv}$ and at $F_{adv}=0.7F_{adv}$ from left to right")}
+```{r alternative, fig.height=8,fig.width=4,warning=FALSE,message=FALSE, fig.cap = paste0("Alternative HCR formulations, with $F_{min}=0$ (top) and $F_{min}=0.5F_{tgt}$ (bottom) under different $F_{adv}$ options set at $F_{adv}=F_{adv}$, $F_{adv}=0.8F_{adv}$ and at $F_{adv}=0.7F_{adv}$ from left to right")}
 
 Fadv = c(df$Ftgt) 
 Btgt = c(df$Btgt) 
@@ -1149,7 +1198,7 @@ z=Btgt)
 # plot ggplot list
 ggarrange(plotlist=hcrs,
           nrow=6,
-          ncol=4)
+          ncol=2)
 
 ```
 
@@ -1173,11 +1222,10 @@ save(om,
 ```
 
 
-
 These changes in parameters can simply be passed on to the existing `arule` to run the variations with `mps`.  
-(dont run in krill!!!)
 
-```{r,eval=FALSE,warning=FALSE}
+```{r,eval=FALSE,warning=FALSE, echo=FALSE}
+#(dont run in krill!!!)
 runs <- mps(om, 
             oem=oem,
             ctrl=arule, 
@@ -1190,10 +1238,8 @@ this a bypass to run in MAC
 ```{r}
 # Divide en lotes de 100
 ni <- length(hcrs$target)  # ← esto es clave
-
 batch_size <- 100  # puedes ajustar este valor según tu iMac
 batches <- split(seq(ni), ceiling(seq_along(seq(ni)) / batch_size))
-
 
 for (b in seq_along(batches)) {
   runs_batch <- foreach(i = batches[[b]]) %dopar% {
@@ -1201,7 +1247,6 @@ for (b in seq_along(batches)) {
   }
   saveRDS(runs_batch, file = paste0("s1.4/runs_batch_", b, ".rds"))
 }
-
 
 runs <- list()
 for (i in seq(ni)) {
@@ -1215,10 +1260,9 @@ for (i in seq(ni)) {
 
 ```
 
-Note the this was run on a linux cluster in parallel
-(dont run in MACs !!)
-
-```{r,eval=F}
+```{r,eval=F, echo=FALSE}
+#(dont run in MACs !!)
+# Note the this was run on a linux cluster in parallel by HWinkler when run. 1000 iterations
 library(doParallel)
 load("rdata/inpMP.sbr.1000.rdata",
      verbose=T)
@@ -1253,7 +1297,20 @@ time
 ```
 
 
-```{r}
+
+This Figure \@ref(fig:compare) displays the results of a MSE for Antarctic krill under different fishing strategies, including the baseline scenario (`Fmsy.OM`) and a range of alternative strategies defined by different target fishing mortalities (`Feq`) and biomass triggers (`Btri.eq`). Recruitment remains relatively stable over time across scenarios, though it remains well below the initial unfished recruitment level `R0` (blue dashed line), which reflects the stock's potential in the absence of fishing. SSB shows a rapid decline from 2020 to 2025 in all scenarios, consistent with initial fishing pressure. Biomass stabilizes at lower levels afterward. Reference points are indicated:
+
+  * `B0` (unfished biomass),
+  * `Bmsy`, `Beq` (biomass at MSY and equilibrium),
+  * `Blim`, `Bpa`, and `Btrigger` (limit, precautionary, and trigger reference points).
+    Most scenarios lead SSB to fall below the `Bpa` and hover near or below `Blim`, indicating potential conservation concern.
+
+Each strategy implements a different constant `Feq` ranging from 0.1 to 1.0. As expected, scenarios with higher `Feq` (e.g., `Feq1.Btri.eq`) exert stronger fishing pressure, potentially leading to less sustainable outcomes. Catch trends reflect fishing effort. Higher `Feq` scenarios yield initially higher catches, but these quickly decline due to decreasing biomass. More conservative strategies show more stable long-term catch levels.
+
+
+
+```{r warning=FALSE, fig.height=5,fig.width=5,warning=FALSE,message=FALSE, fig.cap = "Comparison of population and fishery trajectories from 2020 to 2030 under different harvest control rules. Scenarios vary by fishing mortality targets (`Feq`) and biomass trigger levels (`Btri.eq`). Panels show recruitment (top left), spawning stock biomass (top right), fishing mortality (bottom left), and catches (bottom right). Reference points (`R0`, `B0`, `Bmsy`, `Blim`, `Btrigger`, etc.) are indicated. Results illustrate the trade-offs between yield and conservation risk under different management strategies."}
+
 nfs = length(df$Tune[-1])
 tri = c(rep(".Btri.eq",
             each=nfs))
@@ -1292,10 +1349,6 @@ names(runs) = scenarios
 
 ```
 
-Save 
-
-
-
 An easy way of basic plotting is to extract the `FLStocks` from the list of MSE runs with `lapply`
 
 ```{r,eval=F}
@@ -1305,20 +1358,19 @@ stks = FLStocks(lapply(runs,function(x){
   out@refpts = refpts[c(1:5)]
   out
   }))
-
-
 ```
 
+This Figure \@ref(fig:compare2) presents the full historical and projected trajectories of an Antarctic krill stock under multiple harvest control rule (HCR) scenarios within a Management Strategy Evaluation (MSE) framework. The plots are divided into four panels, each depicting a key stock or fishery metric over time, from 1990 to 2030. The vertical dashed line at ~2020 marks the transition between historical data (black line) and future projections (colored ribbons).
 
-
-```{r, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Initial OM and the MSE forecast horizon under a fixed $F_{tgt}$ rule and 6 HCR hockey-stick scenarios")}
+```{r compare2, fig.height=7,fig.width=9,warning=FALSE ,message=FALSE, fig.cap = "The panels show recruitment, spawning stock biomass (SSB), fishing mortality (F), and catches from 1990 through 2030"}
 
 ref = FLStockR(window(stock(om),end=dy))
 ref@refpts = refpts
 pstks = FLStocks(c(FLStocks(stock=window(ref,end=dy)),
               stks))
 
-plotAdvice(iter(pstks,thin))+facet_wrap(~qname,scales="free")+
+plotAdvice(iter(pstks,thin))+
+  facet_wrap(~qname,scales="free")+
   theme_bw()+
   scale_color_manual(values=c("black",
                               ss3col(length(pstks))[-1]))+
@@ -1333,9 +1385,7 @@ plotAdvice(iter(pstks,thin))+facet_wrap(~qname,scales="free")+
   theme(axis.text.x = element_text(size=8, 
                                    angle=90,
                                    vjust=0.5))
-
 ```
-
 
 ```{r,eval=FALSE}
 save(pstks,
@@ -1354,19 +1404,25 @@ medref = stockMedians(ref)
 pmstks = FLStocks(c(FLStocks(stock=window(medref,end=dy)),
               medstks))
 
-plotAdvice(pmstks)+facet_wrap(~qname,scales="free")+
-  scale_color_manual(values=c("black",ss3col(length(pmstks))[-1]))+
+plotAdvice(pmstks)+
+  facet_wrap(~qname,scales="free")+
+  scale_color_manual(values=c("black",
+                              ss3col(length(pmstks))[-1]))+
   theme_bw()+xlab("Year")+
-  geom_vline(xintercept = c(dy),linetype=2,col=1)+
-    geom_vline(xintercept = c(fy),linetype=2,col=4)+
+  geom_vline(xintercept = c(dy),
+             linetype=2,col=1)+
+    geom_vline(xintercept = c(fy),
+               linetype=2,col=4)+
   scale_x_continuous(breaks=seq(1900,3000,5))+
-  theme(axis.text.x = element_text(size=8, angle=90,vjust=0.5))
+  theme(axis.text.x = element_text(size=8, 
+                                   angle=90,vjust=0.5))
 
 ```
 
-# Performance Evaluation with adjustment for sex-tructured stocks
+## Performance Evaluation with adjustment for sex-tructured stocks 
 
-## Define Metrics for performance evaluation of sex-structured 
+> (Review this in krill!!)
+> Define Metrics for performance evaluation of sex-structured 
 
 ```{r}
 metrics <- list(SB = function(x)unitSums(ssb(x)), 
@@ -1374,7 +1430,6 @@ metrics <- list(SB = function(x)unitSums(ssb(x)),
                 C = function(x)unitSums(catch(x)),
                 Rec= function(x)unitSums(rec(x)))
 ```
-
 
 Define performance statistics - ordered alphabetically
 
@@ -1397,11 +1452,11 @@ stats <- list(
 ```  
 
 
-## Long-term last 25 years (75 years)
+## Long-term last 10 years
 
 
+To improve the realism and robustness of management evaluation, we replaced the deterministic Maximum Sustainable Yield (MSY) estimate with a stochastic MSY derived from Management Strategy Evaluation (MSE). Specifically, we used the median of the total catch over the last 10 years of a simulation run where the fishing mortality was fixed at the “true” $F_{MSY}$, referred to as `Fmsy.OM`. This approach ensures that the MSY reference point reflects the outcome of the operating model under optimal fishing pressure, capturing both process and observation uncertainty from the MSE. The new MSY value is appended to the `refpts` object and used as a basis for evaluating management performance.
 
-Replace deterministic MSY with MSE MSY from a run with the true, fixed $F_{MSY}$ in the  reference points
 
 ```{r}
 refpts.perf = refpts
@@ -1410,8 +1465,8 @@ refpts.perf = rbind(refpts.perf,
 
 ```
 
+Subsequently, performance metrics were computed for each evaluated management strategy using the updated reference points. The `performance()` function was applied to the projected stock trajectories (`stks`), assessing each strategy against the MSE-derived `refpts.perf`. The evaluation includes a set of predefined metrics and summary statistics, such as probability of maintaining biomass above thresholds or average catch. The analysis focuses on the terminal 10-year period of the simulation, enabling comparisons of yield, conservation outcomes, and trade-offs across alternative harvest control rules.
 
-Compute performance metrics
 
 ```{r,warning=F,message=F}
 perf <- performance(stks,
@@ -1424,10 +1479,10 @@ perf <- performance(stks,
 
 \pagebreak
 
-## PLOT performance
+This Figure \@ref(fig:plotlt) show the long-term performance metrics evaluation.
 
 
-```{r, fig.height=9,fig.width=8,warning=FALSE,message=FALSE, fig.cap = paste0("Performance: Long-term performance evaluation")}
+```{r plotlt, fig.height=6,fig.width=7,warning=FALSE,message=FALSE, fig.cap = paste0("Performance: Long-term performance evaluation")}
 
 ncol = length(unique(perf$mp)) 
 pbp = plotBPs(perf,
@@ -1444,10 +1499,12 @@ pbp
 
 ```
 
+The performance metrics inkrill MSE reveal several key patterns in stock status and management outcomes across different scenarios. The F/Fmsy ratios show fishing pressure levels relative to sustainable targets, with values below 1.0 indicating conservative harvest rates and values above 1.0 suggesting overexploitation risk. The B/Bmsy metrics demonstrate stock biomass relative to reference points, where values above 1.0 reflect healthy stock levels (2.5-1.5 range) and values below 1.0 (0.6-0.2 range) signal potential overfishing states. The candidate scenarios (Feq0.9.Btrl.eq to Feq0.1.Btrl.eq) systematically test reduced fishing intensities, showing progressively lower F/Fmsy ratios (from 1.050 to 0.950) paired with increasing B/Bmsy values, indicating how incremental F reductions could rebuild biomass while maintaining catches. The tight clustering of performance statistics around the 1.0 reference point for both F/Fmsy and B/Bmsy in some scenarios suggests these management procedures may effectively balance conservation and yield objectives for krill, though the wider ranges (0.2-2.5 for B/Bmsy) highlight the system's sensitivity to different harvest control rules under recruitment variability.
+
 
 \pagebreak
 
-### Performance Table
+## Performance Table
 
 
 
@@ -1466,22 +1523,20 @@ tab.pf = data.frame(tab.pf,Fadv=df$Ftgt,Btrigger=df$Btrigger)
 tab.pf = tab.pf[,c(1,9,7,5,8,2,6,3,4)]
 write.csv(tab.pf,file="perftabs/ftune.tab.csv",row.names = F)
 
-
-knitr::kable(tab.pf,"pipe",
-      align ="lccccc",
-      caption="Robustness tests of $F_{adv}$ in line with ICES precautionary approach under closed loop simulations with feedback control of assessment advice emulation")
+kbl(tab.pf, format = "latex", booktabs = TRUE, align = "lccccc",
+    caption = "Robustness tests of $F_{adv}$ in precautionary approach under closed loop simulations with feedback control of assessment advice emulation") %>%
+  kable_styling(latex_options = c("hold_position", "scale_down"))
 
 
 ```
 
 
-
 \pagebreak
 
-### MSE kobe plot
 
-```{r fig5, fig.height=8,fig.width=10, fig.cap = paste0("MSE kobe plot Advice rules"), warning=FALSE}
 
+```{r eval=FALSE, fig5, fig.height=8,fig.width=10, fig.cap = paste0("MSE kobe plot Advice rules"), warning=FALSE}
+## MSE kobe plot
 kbcex =function(){theme(plot.title = element_text(size=10),
                         legend.key.size = unit(0.3, 'cm'), #change legend key size
                         legend.key.height = unit(0.4, 'cm'), #change legend key height
@@ -1493,3 +1548,54 @@ kobeMPs(perf,y="a.medianFmsy", x="b.medianBmsy")+
 
 ```
 
+
+# CONCLUSION
+
+
+This study represents a first implementation of a Management Strategy Evaluation (MSE) for Antarctic krill based on outputs from an integrated stock assessment model. Using a deterministic operating model and closed-loop simulations, we evaluated the performance of current and alternative harvest control rules under uncertainty. The simulations reveal that FMSY-based harvest control rules can maintain the stock near target reference points (B/BMSY ~1.0), though performance is sensitive to recruitment variability and observation errors. Key limitations include: (1) simplified spatial structure, (2) unvalidated stock-recruitment relationships, and (3) preliminary treatment of implementation uncertainty. Results demonstrate the feasibility of applying MSE frameworks to krill, providing insights into trade-offs between precautionary reference points and yield. However, this preliminary exercise highlights key areas for improvement, including the incorporation of recruitment and implementation uncertainty, as well as predator–prey interactions. Future developments should also explore spatial structure and feedbacks from ecosystem indicators to enhance realism and support ecosystem-based fisheries management. This work provides a scientific basis for evaluating harvest strategies under uncertainty, offering a structured approach that can be progressively adapted to inform CCAMLR’s ecosystem-based management of the krill fishery.
+
+
+\pagebreak
+
+# CODE REPOSITORY
+
+Krill MSE Repository Overview GitHub Link: [https://github.com/MauroMardones/Krill_MSE/tree/main](https://github.com/MauroMardones/Krill_MSE/tree/main)  
+
+### Core Components
+
+*Main Simulation Script*
+
+   - `ShortCut_MSE_Krill.Rmd`:  
+     - Implements the Operating Model (OM) and Management Procedures (MPs).  
+     - Uses shortcut MSE methods for efficient krill population projections.  
+     - Generates key outputs: F/SSB trajectories, recruitment deviations, and performance metrics.  
+
+*Stock Assessment Data*
+
+   - `base.model1.4.rds`:  
+     - SS3 or similar assessment output used to initialize the OM (e.g., growth, mortality, recruitment parameters).
+     - Provides biological reference points (*F~MSY~*, *B~trigger~*).  
+
+*Supporting Code*
+
+   - `MSE_Krill_FLR.Rmd`:  
+     - Supplementary analyses (e.g., sensitivity tests, alternative HCRs).  
+     - Visualizations (trade-off plots, Kobe matrices).  
+
+*Project Metadata*
+
+   - `.gitignore`, `LICENSE`, `README.md`:  
+     - Standard setup for reproducibility and collaboration.  
+     - `README.md` should include:  
+       - Installation (e.g., `install.packages(c("FLR", "mse"))`).  
+       - Workflow: How to run `ShortCut_MSE_Krill.Rmd` → validate OM → test MPs.  
+       - Key Dependencies: FLR, mse, ggplot2.  
+
+
+```{r}
+sessionInfo()
+```
+
+\pagebreak
+
+# REFERENCES

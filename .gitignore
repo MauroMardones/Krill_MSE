@@ -6,3 +6,7 @@ run_SSMSE-ex*/
 test/
 s1.4/
 rdata/
+ShortCut_MSE_Krill_files/
+ShortCut_MSE_Krill.tex*
+ShortCut_MSE_Krill.pdf*
+ShortCut_MSE_Krill.log*
