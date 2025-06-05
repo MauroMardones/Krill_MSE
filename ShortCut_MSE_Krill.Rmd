@@ -25,6 +25,7 @@ header-includes:
 ```{=tex}
 \fontsize{10}{18}
 \selectfont
+
 ```
 
 ```{r  setup, eval=FALSE, include=FALSE, message=F}
@@ -34,6 +35,8 @@ options(bitmapType = "cairo")
 # Lo mapas se hacen mas rapido
 # solo para IOs
 ```
+
+
 
 
 ```{r setup2, echo = FALSE, warning = FALSE, message = FALSE}
@@ -46,15 +49,15 @@ opts_chunk$set(
   tidy.opts = list(width.cutoff = 55),
   tidy = TRUE
 )
-
-knit_hooks$set(output = function(x, options) {
-  if (!is.null(n <- options$linewidth)) {
-    x <- knitr:::split_lines(x)
-    if (any(nchar(x) > n)) x <- strwrap(x, width = n)
-    x <- paste(x, collapse = '\n')
-  }
-  x
-})
+# 
+# knit_hooks$set(output = function(x, options) {
+#   if (!is.null(n <- options$linewidth)) {
+#     x <- knitr:::split_lines(x)
+#     if (any(nchar(x) > n)) x <- strwrap(x, width = n)
+#     x <- paste(x, collapse = '\n')
+#   }
+#   x
+# })
 ```
 
 \pagebreak
@@ -177,8 +180,8 @@ This code block initiates the setup of the operating model by reading and simpli
 
 
 ```{r, eval=FALSE}
-run = "krill.stock.wAP"
-load(file=file.path("rdata",paste0(run,".rdata")),verbose = T)
+load("~/DOCAS/Krill_MSE/base.model1.4.RData",
+     verbose = TRUE)
 ```
 
 
@@ -640,12 +643,12 @@ iy = ay
 For sciences objective research in krill fishery, the number of iterations are reduced to 100.
 
 ```{r}
-it <- 100
+it <- 10 # test. usually with 1000 iteration but it take long  time
 ```
 
 
 
-This code prepares a reduced set of 100 simulated stock iterations (from an original 1000) for computational efficiency in Management Strategy Evaluation (MSE) by using the `propagate()` function on the annual stock object (`stka`). The subsetting to 100 iterations (`it=100`) maintains stochasticity while reducing runtime, which is particularly useful for testing and debugging scenarios before running full-scale MSE simulations. The resulting object `stki` preserves all biological and structural properties of the original stock but with fewer stochastic realizations.
+This code prepares a reduced set of 100 simulated stock iterations (from an original 1000) for computational efficiency in Management Strategy Evaluation (MSE) by using the `propagate()` function on the annual stock object (`stka`). The subsetting to 10 iterations (`it=10`) maintains stochasticity while reducing runtime, which is particularly useful for testing and debugging scenarios before running full-scale MSE simulations. The resulting object `stki` preserves all biological and structural properties of the original stock but with fewer stochastic realizations.
 
 
 ```{r}
@@ -660,9 +663,9 @@ srdevs <- FLCore::rlnormar1(n=it,
                     sdlog=spars["sigmaR"],
                     rho=spars["rho"], 
                     years=seq(dy, fy))
-# Sex-structured
-if (dims(stki)$unit == 2) srdevs  <- expand(srdevs ,
-                                            unit = c("F", "M"))
+# # Sex-structured
+# if (dims(stki)$unit == 2) srdevs  <- expand(srdevs ,
+#                                             unit = c("F", "M"))
 ```
 
 
