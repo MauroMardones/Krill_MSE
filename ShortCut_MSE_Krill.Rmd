@@ -25,6 +25,7 @@ header-includes:
 ```{=tex}
 \fontsize{10}{18}
 \selectfont
+
 ```
 
 ```{r  setup, eval=FALSE, include=FALSE, message=F}
@@ -640,12 +641,12 @@ iy = ay
 For sciences objective research in krill fishery, the number of iterations are reduced to 100.
 
 ```{r}
-it <- 100
+it <- 10 # test. usually with 1000 iteration but it take long  time
 ```
 
 
 
-This code prepares a reduced set of 100 simulated stock iterations (from an original 1000) for computational efficiency in Management Strategy Evaluation (MSE) by using the `propagate()` function on the annual stock object (`stka`). The subsetting to 100 iterations (`it=100`) maintains stochasticity while reducing runtime, which is particularly useful for testing and debugging scenarios before running full-scale MSE simulations. The resulting object `stki` preserves all biological and structural properties of the original stock but with fewer stochastic realizations.
+This code prepares a reduced set of 100 simulated stock iterations (from an original 1000) for computational efficiency in Management Strategy Evaluation (MSE) by using the `propagate()` function on the annual stock object (`stka`). The subsetting to 10 iterations (`it=10`) maintains stochasticity while reducing runtime, which is particularly useful for testing and debugging scenarios before running full-scale MSE simulations. The resulting object `stki` preserves all biological and structural properties of the original stock but with fewer stochastic realizations.
 
 
 ```{r}
@@ -660,9 +661,9 @@ srdevs <- FLCore::rlnormar1(n=it,
                     sdlog=spars["sigmaR"],
                     rho=spars["rho"], 
                     years=seq(dy, fy))
-# Sex-structured
-if (dims(stki)$unit == 2) srdevs  <- expand(srdevs ,
-                                            unit = c("F", "M"))
+# # Sex-structured
+# if (dims(stki)$unit == 2) srdevs  <- expand(srdevs ,
+#                                             unit = c("F", "M"))
 ```
 
 
