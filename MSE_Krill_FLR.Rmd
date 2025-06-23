@@ -42,7 +42,7 @@ dir <- here("test")
 stk <- readFLSss3(dir)
 plot(stk)
 stk_stf <- window(stk, end = 2020) # cut off data after 2017
-stk_stf <- stf(stk_stf, nyears = 10) # add 10 years
+stk_stf <- stf(stk_stf, nyears = 20) # add 10 years
 range(stk_stf)
 ```
 
