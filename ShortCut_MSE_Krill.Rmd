@@ -646,7 +646,7 @@ iy = ay
 For sciences objective research in krill fishery, the number of iterations are reduced to 100.
 
 ```{r}
-it <- 10 # test. usually with 1000 iteration but it take long  time
+it <- 100 # test. usually with 1000 iteration but it take long  time
 ```
 
 
@@ -1360,7 +1360,7 @@ It can be seen that despite "perfect" knowledge of the "true" $F_{MSY}$, and fis
 
 ```{r statusfi, fig.height=7,fig.width=9,warning=FALSE,message=FALSE, fig.cap = paste0("Stock Status under a fixed $F_{tgt}$ short-cut MSE rule")}
 thin = seq(1,it,5)
-plotAdvice(iter(runR,1))+
+plotAdvice(iter(runR,thin))+
      geom_vline(xintercept = c(dy),
                 linetype=2,col=1)+
     geom_vline(xintercept = c(fy),
@@ -1607,7 +1607,7 @@ ref@refpts = refpts
 pstks = FLStocks(c(FLStocks(stock=window(ref,end=dy)),
               stks))
 
-plotAdvice(iter(pstks,1))+
+plotAdvice(iter(pstks,thin))+
   facet_wrap(~qname,scales="free")+
   theme_bw()+
   scale_color_manual(values=c("black",
