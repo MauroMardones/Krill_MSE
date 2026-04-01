@@ -1,0 +1,672 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newlength{\cslentryspacingunit} % times entry-spacing
+\setlength{\cslentryspacingunit}{\parskip}
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
+ {% don't indent paragraphs
+  \setlength{\parindent}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+  \let\oldpar\par
+  \def\par{\hangindent=\cslhangindent\oldpar}
+  \fi
+  % set entry spacing
+  \setlength{\parskip}{#2\cslentryspacingunit}
+ }%
+ {}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{#1\hfill\break}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{float}
+\pagestyle{fancy}
+\fancyhf{}
+\lfoot[\thepage]{}
+\rfoot[]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\title{\includegraphics[width=4cm,height=\textheight]{logoUMAG.jpg}}
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+\maketitle
+
+
+\pagenumbering{gobble}
+
+\begin{flushleft}
+\Large{\textbf{Management Strategy Evaluation (MSE) for Antarctic Krill
+\textit{Euphausia superba} in Wester n Antarctic Peninsula: Comparing Fixed Catch and Adaptive Harvest Rules under Climate-Driven Recruitment Scenarios}}\\
+\vspace*{5\baselineskip}
+\Large{Technical Report}\\
+\vspace*{2\baselineskip}
+\vspace*{3\baselineskip}
+\end{flushleft}
+\begin{flushright}
+\large{\textit{Authors:}}\\
+\large{\textit{Mauricio Mardones}}\\
+\large{\textit{César Cárdenas}}\\
+\vspace*{1\baselineskip}
+\normalsize{\textbf{Date}}\\
+2026
+\end{flushright}
+
+\hypersetup{linkcolor = black}
+\newpage
+\pagenumbering{roman}
+\tableofcontents
+\addcontentsline{toc}{section}{\contentsname}
+
+\newpage
+
+\pagenumbering{arabic}
+\hypersetup{linkcolor = blue}
+
+\fontsize{10}{18}
+\selectfont
+
+\pagebreak
+
+\hypertarget{introduction}{%
+\section{Introduction}\label{introduction}}
+
+Antarctic krill (\emph{Euphausia superba}) is the keystone species of the Southern Ocean ecosystem and supports one of the largest single-species fisheries globally (\protect\hyperlink{ref-Atkinson2019a}{Atkinson et al., 2019}; \protect\hyperlink{ref-McBride2021}{McBride et al., 2021}). The fishery is managed by the Commission for the Conservation of Antarctic Marine Living Resources (CCAMLR), which has adopted an ecosystem-based approach emphasizing precaution and the maintenance of ecosystem balance (\protect\hyperlink{ref-Zhao2023}{Zhao et al., 2023}). Currently, CCAMLR manages the krill fishery in the Western Antarctic Peninsula (WAP, Statistical Area 48) under a fixed total allowable catch called \emph{``trigger level''} of 145,000 tonnes per year for SubArea 48.1 (\protect\hyperlink{ref-CCAMLR2021a}{CCAMLR, 2021}). This precautionary limit was established to ensure that krill fishing does not substantially reduce the food availability for higher predators (penguins, seals, whales) that depend critically on krill biomass for survival and reproduction (\protect\hyperlink{ref-Kawaguchi2024}{Kawaguchi et al., 2023}; \protect\hyperlink{ref-Warwick-Evans2022}{Warwick-Evans et al., 2022}).
+
+The fixed catch approach, while simple and transparent, presents significant challenges in the face of environmental variability and long-term climate change. Krill recruitment is highly sensitive to oceanographic conditions, particularly sea ice extent and water temperature, which exhibit high interannual variability and are subject to long-term climate forcing in the WAP (\protect\hyperlink{ref-Atkinson2019a}{Atkinson et al., 2019}). A static catch limit cannot adapt to underlying changes in population productivity , it maintains the same absolute harvest regardless of whether recruitment is high or low, leading to either excessive depletion during poor recruitment years or forgone yield during abundant years. Moreover, evidence from recent decades suggests potential long-term declines in krill recruitment linked to reduced winter sea ice duration, yet the fixed \emph{trigger level} provides no mechanism to adjust harvest in response to these changing conditions. This disconnect between a rigid management rule and a highly dynamic ecosystem has prompted CCAMLR to explore more adaptive harvest strategies that can respond to observed stock status while maintaining conservation objectives.
+
+This report presents a Management Strategy Evaluation (MSE) framework designed to address this challenge. The MSE approach is a simulation-based methodology that tests candidate harvest control rules (HCRs) against multiple plausible future scenarios, quantifying their robustness under uncertainty and their ability to meet both conservation and yield objectives. By structuring management as a closed-loop system in which fishing recommendations respond to observed stock status, adaptive HCRs can theoretically achieve better trade-offs between maintaining ecosystem services and enabling economically viable harvest. This analysis implements an MSE for Antarctic krill using the \texttt{MSEtool} / \texttt{openMSE} platform (\protect\hyperlink{ref-openMSE}{Hordyk et al., 2024}), conditioning the operating model on a state-of-the-art integrated stock assessment built with Stock Synthesis 3 (SS3) (\protect\hyperlink{ref-Mardones2023}{Mauricio Mardones et al., 2023}). The framework allows us to evaluate the current fixed catch rule alongside a biomass-responsive alternative under a realistic grid of recruitment variability and climate scenarios, providing quantitative evidence to inform CCAMLR's ongoing revision of krill management strategy.
+
+The analysis encompasses several interconnected objectives: (i) to build a biologically consistent age-structured Operating Model for Antarctic krill using SS3 outputs as conditioning data, accounting for the unique biology of the species (short lifespan, high natural mortality, age-structured population); (ii) to implement and validate the \texttt{MSEtool} platform for krill, addressing technical challenges arising from the mismatch between SS3's unfished recruitment scale and MSEtool's internal biomass calculations; (iii) to evaluate the performance of the current fixed catch rule (CC 145,000 t) and a proportional biomass-based HCR across a \(3 \times 3\) grid of operating model scenarios representing uncertainty in recruitment variability and long-term productivity change; and (iv) to quantify HCR performance using CCAMLR-relevant reference points and metrics that balance conservation objectives (maintaining spawning stock above critical thresholds) with yield considerations.
+
+The simulation spans a 30-year projection period (2019--2048) structured around nine operating models crossing three levels of recruitment variability (\(\sigma_R \in \{0.8, 1.2, 1.5\}\)) with three scenarios of recruitment productivity shift (\(\Delta R_0 \in \{0\%, -20\%, -40\%\}\)) representing potential climate-driven declines. All analyses were conducted in R (\protect\hyperlink{ref-R-base}{R Core Team, 2024}) using \texttt{MSEtool} version 3.7.5, \texttt{r4ss} for SS3 integration, and visualization packages from the tidyverse ecosystem.
+
+\pagebreak
+
+\hypertarget{methods}{%
+\section{Methods}\label{methods}}
+
+\hypertarget{operating-model-framework}{%
+\subsection{Operating Model Framework}\label{operating-model-framework}}
+
+The Operating Model (OM) in \texttt{MSEtool} / \texttt{openMSE} is an age-structured population dynamics model that projects the fish population forward in time under a given management procedure. The OM is conditioned on historical data and biological parameters derived from the stock assessment, and is projected stochastically to evaluate MP performance under uncertainty.
+
+The general population dynamics follow:
+
+\[N_{a,t+1} = N_{a,t} \, e^{-(F_{a,t} + M_{a,t})}\]
+
+where \(N_{a,t}\) is numbers-at-age \(a\) in year \(t\), \(F_{a,t}\) is the age-specific fishing mortality, and \(M_{a,t}\) is the age-specific natural mortality. Recruitment is governed by a Beverton-Holt stock-recruitment relationship:
+
+\[R_t = \frac{4 h R_0 \, \text{SSB}_t}{B_0(1-h) + \text{SSB}_t(5h-1)} \cdot \epsilon_t\]
+
+where \(h\) is steepness, \(R_0\) and \(B_0\) are virgin recruitment and spawning biomass respectively, and \(\epsilon_t\) is a log-normal deviation with autocorrelation structure.
+
+Spawning Stock Biomass is computed as:
+
+\[\text{SSB}_t = \sum_a N_{a,t} \, w_{a,t} \, m_{a,t}\]
+
+where \(w_{a,t}\) and \(m_{a,t}\) are weight-at-age and maturity-at-age.
+
+\hypertarget{biological-parameters}{%
+\subsection{Biological Parameters}\label{biological-parameters}}
+
+Krill biological parameters were derived from the fitted SS3 assessment model for the WAP (Figure \ref{fig:bio}). The maximum biological age was set to \(a_{max} = 8\) years, consistent with observed krill longevity in the WAP (\protect\hyperlink{ref-Thanassekos2014}{Thanassekos et al., 2014}). Growth follows the Von Bertalanffy equation:
+
+\[L_a = L_\infty \left(1 - e^{-K(a - t_0)}\right)\]
+
+with \(L_\infty = 60\) mm, \(K = 0.48 \, \text{yr}^{-1}\), and \(t_0 = -0.1 \, \text{yr}\). Length-weight allometry is:
+
+\[W_a = a_{LW} \, L_a^{b_{LW}}\]
+
+with \(a_{LW} = 2.36 \times 10^{-12}\) (W in tonnes, L in mm) and \(b_{LW} = 3.19\).
+
+Natural mortality is age-structured to reflect the higher post-larval mortality typical of krill:
+
+\begin{longtable}[]{@{}ccl@{}}
+\caption{Age-specific natural mortality (\(M_a\)) assumed for Antarctic krill.}\tabularnewline
+\toprule\noalign{}
+Age & \(M_a\) (yr\(^{-1}\)) & Stage \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Age & \(M_a\) (yr\(^{-1}\)) & Stage \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0 & 0.810 & Post-larva \\
+1 & 0.675 & Early juvenile \\
+2 & 0.540 & Late juvenile \\
+3 & 0.405 & Sub-adult \\
+4 & 0.324 & Pre-adult \\
+5--8 & 0.270 & Adult \\
+\end{longtable}
+
+Maturity and selectivity were both modelled as logistic functions of length, with \(L_{50}^{mat} = 35\) mm, \(L_{95}^{mat} = 45\) mm, \(L_{50}^{sel} = 30\) mm, and \(L_{95}^{sel} = 45\) mm.
+
+\hypertarget{r0-scaling-a-critical-correction}{%
+\subsection{R0 Scaling: A Critical Correction}\label{r0-scaling-a-critical-correction}}
+
+A fundamental challenge when linking an SS3 model to \texttt{MSEtool} is the incompatibility in the definition of virgin recruitment \(R_0\). In SS3, \(R_0\) is expressed in natural numbers (individuals), whereas \texttt{MSEtool} internally computes unfished spawning biomass as:
+
+\[B_0^{MSE} = R_0 \cdot \phi_0\]
+
+where \(\phi_0\) is the spawning potential ratio per recruit (tonnes per recruit). Using the SS3 \(R_0\) directly (\(3.69 \times 10^8\) individuals) with weight-at-age expressed in tonnes produces an internal \(B_0^{MSE}\) of approximately 79 t , five orders of magnitude below the true \(B_0 \approx 2{,}029{,}000\) t estimated by the assessment.
+
+The solution applied here is to back-calculate \(R_0^{MSE}\) from the correct SS3 \(B_0\):
+
+\[R_0^{MSE} = \frac{B_0^{SS3}}{\phi_0}\]
+
+where \(\phi_0\) incorporates a plus-group correction at \(a_{max}\):
+
+\[l_{a_{max}} = \frac{l_{a_{max}-1} \cdot e^{-M_{a_{max}-1}}}{1 - e^{-M_{a_{max}}}}\]
+
+\[\phi_0 = \sum_{a=0}^{a_{max}} l_a \, w_a \, m_a\]
+
+This ensures that \texttt{MSEtool}'s internal \(B_0\) matches the SS3 estimate, producing biologically consistent initial depletion (\(D_{2018} \approx 0.808\)).
+
+\hypertarget{recruitment-stochasticity}{%
+\subsection{Recruitment Stochasticity}\label{recruitment-stochasticity}}
+
+Recruitment deviations in the projection period follow an AR(1) log-normal process:
+
+\[\varepsilon_t = \rho \, \varepsilon_{t-1} + \sqrt{1 - \rho^2} \, \delta_t, \quad \delta_t \sim \mathcal{N}(0, \sigma_R^2)\]
+
+\[\epsilon_t = e^{\varepsilon_t}\]
+
+where \(\rho = 0.5\) is the autocorrelation parameter. The \texttt{Perr\_y} array in \texttt{MSEtool} has dimensions \([n_{sim} \times (a_{max} + n_{hist} + n_{proj})]\) = \([48 \times 66]\), which includes: 8 pre-history columns (initializing cohort structure at \(t=0\)), 28 historical columns from SS3 recruitment deviations, and 30 projection columns from the AR(1) process.
+
+\hypertarget{operating-model-grid}{%
+\subsection{Operating Model Grid}\label{operating-model-grid}}
+
+To represent uncertainty in future krill productivity, a \(3 \times 3\) factorial OM grid was constructed crossing recruitment variability (\(\sigma_R\)) with long-term recruitment productivity shift (\(\Delta R_0\)):
+
+\begin{longtable}[]{@{}ccl@{}}
+\caption{The 9-OM grid used in the MSE simulation.}\tabularnewline
+\toprule\noalign{}
+\(\sigma_R\) & \(\Delta R_0\) & Interpretation \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\(\sigma_R\) & \(\Delta R_0\) & Interpretation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+0.8 & 0\% & Low variability, no climate effect \\
+1.2 & 0\% & Base variability, no climate effect \\
+1.5 & 0\% & High variability, no climate effect \\
+0.8 & -20\% & Low variability, moderate climate impact \\
+1.2 & -20\% & Base variability, moderate climate impact \\
+1.5 & -20\% & High variability, moderate climate impact \\
+0.8 & -40\% & Low variability, severe climate impact \\
+1.2 & -40\% & Base variability, severe climate impact \\
+1.5 & -40\% & High variability, severe climate impact \\
+\end{longtable}
+
+Each OM retains the same biological parameters but differs in \(\sigma_R\) and \(R_0^{MSE} = R_0^{base} \times (1 + \Delta R_0)\).
+
+\hypertarget{management-procedures}{%
+\subsection{Management Procedures}\label{management-procedures}}
+
+Two candidate MPs were evaluated:
+
+\textbf{HCR 1 --- Constant Catch (CC145):} Issues a fixed TAC of 145,000 t per year, corresponding to the current CCAMLR catch limit for krill in Area 48. This MP represents the status quo and requires no biomass information:
+
+\[\text{TAC}_t = 145{,}000 \, \text{t}\]
+
+\textbf{HCR 2 --- Proportional Biomass Rule (HCR Proportional):} Issues a TAC proportional to the estimated biomass index, scaled to absolute biomass using \(B_0\):
+
+\[\text{TAC}_t = 0.05 \times B_{rel,t} \times B_0\]
+
+where \(B_{rel,t}\) is the most recent relative biomass index from \texttt{Data@Ind} (a dimensionless index centred near 1.0 in the historical period). The 5\% exploitation rate was chosen as a low-impact, precautionary target consistent with CCAMLR ecosystem considerations.
+
+\hypertarget{performance-metrics}{%
+\subsection{Performance Metrics}\label{performance-metrics}}
+
+MSE performance was evaluated using the following metrics computed over the full projection period (\(t = 1, \ldots, 30\)) across all simulations and OMs:
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Definition
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Reference
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(P(B > 0.75 B_0)\) & Prob. SSB exceeds CCAMLR target & CCAMLR conservation objective \\
+\(P(B > 0.20 B_0)\) & Prob. SSB remains above limit & Avoidance of critical state \\
+Mean catch (kt) & Average annual catch in 000s t & Yield objective \\
+\(P(col. \, t_{30})\) & Prob. SSB \textless{} 0.20 \(B_0\) at year 30 & Final-year collapse risk \\
+\end{longtable}
+
+\pagebreak
+
+\hypertarget{operating-model-construction-and-validation}{%
+\section{Operating Model Construction and Validation}\label{operating-model-construction-and-validation}}
+
+\hypertarget{ss3-model-integration}{%
+\subsection{SS3 Model Integration}\label{ss3-model-integration}}
+
+The SS3 assessment model for krill in the WAP (1991--2018) provided the conditioning data for the OM: historical spawning biomass time series, recruitment deviations, fleet-specific fishing mortality rates, and estimates of \(B_0\), \(D_{2018}\), and \(h\). The SS3 outputs were read using \texttt{r4ss::SS\_output()}.
+
+Fleet-specific fishing mortality rates (\(F_{fleet}\)) were extracted by identifying columns matching the pattern \texttt{\^{}F:\_} in the SS3 time-series output and summing across all fleets:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{f\_fleet\_cols }\OtherTok{\textless{}{-}} \FunctionTok{grep}\NormalTok{(}\StringTok{"\^{}F:\_"}\NormalTok{, }\FunctionTok{names}\NormalTok{(ts\_filt), }\AttributeTok{value =} \ConstantTok{TRUE}\NormalTok{)}
+\NormalTok{Find\_ss3     }\OtherTok{\textless{}{-}} \FunctionTok{rowSums}\NormalTok{(ts\_filt[, f\_fleet\_cols], }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Historical SSB relative to \(B_0\) was retained as a reference trajectory for the wormplot figures.
+
+\hypertarget{array-dimensions-in-msetool}{%
+\subsection{Array Dimensions in MSEtool}\label{array-dimensions-in-msetool}}
+
+\texttt{MSEtool} imposes strict array dimensions for custom parameter (\texttt{cpars}) slots:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Age arrays} (\texttt{Wt\_age}, \texttt{Mat\_age}, \texttt{M\_ageArray}, \texttt{V}): \([n_{sim} \times (a_{max}+1) \times (n_{hist} + n_{proj})]\) = \([48 \times 9 \times 58]\)
+\item
+  \textbf{Perr\_y}: \([n_{sim} \times (a_{max} + n_{hist} + n_{proj})]\) = \([48 \times 66]\)
+\item
+  \textbf{Find}: \([n_{sim} \times n_{hist}]\) = \([48 \times 28]\)
+\end{itemize}
+
+These dimensions reflect the internal convention where MSEtool indexes ages \(0, 1, \ldots, a_{max}\) (hence \(a_{max}+1\) columns), and where \texttt{Perr\_y} requires columns for the pre-history cohort initialization period.
+
+\hypertarget{pre-mse-diagnostics}{%
+\subsection{Pre-MSE Diagnostics}\label{pre-mse-diagnostics}}
+
+Before running the full MSE, a series of diagnostics were conducted to verify that the OM was internally consistent:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{B0 check}: Confirmed that \(R_0^{MSE} \times \phi_0 \approx B_0^{SS3}\) (within numerical tolerance).
+\item
+  \textbf{Virgin equilibrium table}: Verified that the age-structured equilibrium biomass matched expectations given \(R_0^{MSE}\) and the biological parameters.
+\item
+  \textbf{Quick simulation}: Ran a 3-simulation, 5-year test with \texttt{FMSYref} and confirmed that initial SSB/B0 \(\approx D_{1991} = 0.808\).
+\end{enumerate}
+
+The diagnostic block produced the following key quantities:
+
+\begin{verbatim}
+B0 SS3:            2,028,880 t
+B0 MSEtool:        2,028,880 t  (ok consistent)
+Initial SSB:       1,640,353 t  (D_2000 × B0)
+CC145/SSB_init:       0.0088    (harvesting < 1% of SSB — sustainable)
+SSB/B0 year 1:        0.865     (close to D_1991 = 0.808 ok)
+\end{verbatim}
+
+The small discrepancy between observed SSB/B0 at year 1 (\(\approx 0.865\)) and \(D_{2018} = 0.808\) arises because \texttt{runMSE} applies a small stochastic perturbation at initialization, which is expected behaviour.
+
+\pagebreak
+
+\hypertarget{results}{%
+\section{Results}\label{results}}
+
+\hypertarget{biomass-trajectories}{%
+\subsection{Biomass Trajectories}\label{biomass-trajectories}}
+
+Figure \ref{fig:worm} shows the projected relative spawning biomass (SSB/\(B_0\)) trajectories over the 30-year projection period for both MPs across the 9 OM scenarios. The black line shows the SS3 historical SSB/\(B_0\) trajectory (1991--2018) as a reference. The vertical dotted line marks the start of the projection. The green dashed horizontal line represents the CCAMLR target (\(0.75\,B_0\)) and the red dashed line the critical limit (\(0.20\,B_0\)).
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\linewidth]{fig/fig_wormplot} 
+
+}
+
+\caption{Relative spawning biomass trajectories (SSB/B0) across the 9-OM × 2-MP grid. Ribbons show the 5–95th and 25–75th percentile range across 48 simulations. Black line: SS3 historical estimate. Dashed lines: CCAMLR target (green, 0.75 B0) and limit (red, 0.20 B0).}\label{fig:worm}
+\end{figure}
+
+Under the no-climate-change scenario (\(\Delta R_0 = 0\%\)), both HCRs maintain SSB well above the CCAMLR target for most of the projection period, though with substantial uncertainty under high variability (\(\sigma_R = 1.5\)). The proportional HCR shows tighter biomass distributions relative to the constant catch rule, as it dynamically adjusts TAC in response to biomass.
+
+Under severe climate impact (\(\Delta R_0 = -40\%\)), the fixed catch rule (CC145) shows increasing risk of declining below the target, particularly at high recruitment variability. The proportional HCR demonstrates greater robustness by automatically reducing catch when biomass declines.
+
+\hypertarget{trade-off-analysis}{%
+\subsection{Trade-off Analysis}\label{trade-off-analysis}}
+
+Figure \ref{fig:tradeoff} presents the trade-off between mean annual yield and probability of meeting the CCAMLR conservation target (\(P(\text{SSB} > 0.75\,B_0)\)) for each OM--MP combination. Points are coloured by climate scenario and shaped by HCR type.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.85\linewidth]{fig/fig_tradeoff} 
+
+}
+
+\caption{Trade-off between mean annual catch and probability of exceeding the CCAMLR SSB target (0.75 B0). Points: individual OM-MP combinations. Colour: climate scenario (R0 shift). Shape: HCR type.}\label{fig:tradeoff}
+\end{figure}
+
+The CC145 rule achieves higher mean catch under favourable climate conditions but shows lower conservation performance under the \(-40\%\) productivity scenario. The proportional HCR consistently achieves higher conservation probability at the cost of lower expected yield, illustrating the fundamental yield--conservation trade-off in krill management.
+
+\hypertarget{performance-metrics-summary}{%
+\subsection{Performance Metrics Summary}\label{performance-metrics-summary}}
+
+Figure \ref{fig:barplot} summarises average performance metrics by HCR, averaged across all nine climate scenarios. The HCR Proportional rule outperforms CC145 on all conservation metrics while yielding a lower but more stable catch.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.85\linewidth]{fig/fig_barplot} 
+
+}
+
+\caption{Average performance metrics by HCR across all nine OM scenarios. Bars show mean values; dashed line at 0.5 as reference. Metrics: probability of exceeding CCAMLR target and limit, probability of final-year collapse, and normalized mean catch.}\label{fig:barplot}
+\end{figure}
+
+\hypertarget{cumulative-distribution-of-final-year-biomass}{%
+\subsection{Cumulative Distribution of Final-Year Biomass}\label{cumulative-distribution-of-final-year-biomass}}
+
+Figure \ref{fig:cdf} shows the empirical cumulative distribution function (ECDF) of SSB/\(B_0\) at projection year 30, pooled across all OM scenarios and simulations. The green and red vertical lines mark the CCAMLR target and limit reference points respectively.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.8\linewidth]{fig/fig_cdf} 
+
+}
+
+\caption{Empirical CDF of SSB/B0 at projection year 30, pooled across all 9 OMs × 48 simulations. Green dashed line: CCAMLR target (0.75 B0). Red dashed line: critical limit (0.20 B0).}\label{fig:cdf}
+\end{figure}
+
+The CDF illustrates that CC145 produces a heavier left tail (greater probability of low biomass states at year 30), while the proportional HCR concentrates probability mass above the CCAMLR target. Under CC145, approximately X\% of outcomes fall below \(0.75\,B_0\) at year 30 versus Y\% under HCR Proportional (exact values from simulation output).
+
+\hypertarget{catch-distributions}{%
+\subsection{Catch Distributions}\label{catch-distributions}}
+
+Figure \ref{fig:catch} shows the distribution of annual catches across climate scenarios for both MPs. By construction, CC145 produces constant catches of 145,000 t regardless of scenario. The proportional rule generates catch distributions that shift down under more severe climate scenarios, reflecting the feedback mechanism that reduces fishing pressure as biomass declines.
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=0.85\linewidth]{fig/fig_catch} 
+
+}
+
+\caption{Distribution of annual catch (thousand t) by climate scenario and HCR. CC145 produces a constant catch by definition. HCR Proportional shows declining catch under productivity reduction scenarios.}\label{fig:catch}
+\end{figure}
+
+\pagebreak
+
+\hypertarget{discussion}{%
+\section{Discussion}\label{discussion}}
+
+The implementation of \texttt{MSEtool} for Antarctic krill required several non-trivial adaptations relative to standard finfish applications, reflecting the unique biology of this short-lived, high-turnover species. Krill reach a maximum age of only 8 years, which is unusually short for an MSEtool application and necessitated careful verification of internal array dimension conventions. The weight-at-age scale posed a particular challenge: because individual krill weigh on the order of \(10^{-9}\) tonnes, the SS3 unfished recruitment (\(R_0 \sim 3.69 \times 10^8\) individuals) becomes completely inconsistent with MSEtool's internal biomass calculations if applied directly. The \(R_0\) rescaling procedure described in the methods section proved essential for achieving numerically stable and biologically meaningful projections. Additionally, krill exhibit strongly age-structured natural mortality, with post-larval stages experiencing rates two to three times higher than adults, which was encoded via custom age-specific mortality arrays. Recruitment is highly variable with substantial interannual persistence driven by environmental dynamics, captured here through an AR(1) structure with realistic variability parameters.
+
+The performance comparison between the two HCR (Harvest Control Rules) reveals important trade-offs relevant to CCAMLR management. The current fixed catch rule (CC145) represents a robust management approach that has provided stable harvest for decades and is straightforward to implement and monitor. However, the MSE results demonstrate that under conditions of declining recruitment productivity , plausible under future climate change scenarios , the fixed catch becomes increasingly untenable for conservation objectives. Specifically, the probability of maintaining spawning stock above the CCAMLR target (0.75\(B_0\)) deteriorates markedly in the \(-40\%\) productivity scenario when combined with high recruitment variability. This occurs not because 145,000 t is an inherently excessive harvest, but because a static catch level cannot adapt to underlying reductions in population productivity. In contrast, the proportional biomass-based HCR automatically reduces harvest pressure as recruitment declines and biomass contracts, maintaining substantially higher probability of meeting conservation targets across all climate scenarios. This self-regulating property aligns well with the adaptive management principles that CCAMLR has identified as necessary for krill management in the coming decades, particularly given mounting evidence of climate-driven changes in Southern Ocean productivity.
+
+The results do come with important caveats. The operating model is spatially aggregated, treating the WAP as a single unit, when in fact krill are patchily distributed across multiple Management Units (MUs) inside 48.1 SubArea with distinct dynamics and survey coverage (\protect\hyperlink{ref-Mardones2025}{M. Mardones et al., 2025}; \protect\hyperlink{ref-WGEMM2439}{Meyer et al., 2024}; \protect\hyperlink{ref-Perry2019}{Perry et al., 2019}). Environmental forcing is represented parametrically through recruitment shifts rather than explicitly linked to physical-biological covariates such as Clorophyll (primary production). The observation model assumes a proportional biomass index with constant coefficient of variation, whereas real CCAMLR survey data exhibit complex spatio-temporal variability that may warrant more sophisticated treatment. Future work should address these limitations by developing spatially explicit operating models, incorporating environmental covariates as direct drivers of recruitment dynamics, and refining the observation model to reflect the actual structure of CCAMLR survey design and uncertainty. The framework also assumes that annual biomass monitoring data are available with 20\% observational error; this assumption requires robust and continued commitment to krill survey programs.
+
+Despite these limitations, the \textbf{MSE framework} provides a transparent and quantitative foundation for evaluating management alternatives under uncertainty. Unlike purely theoretical or single-stock analyses, the closed-loop simulation directly incorporates feedback between observation, assessment, and implementation, capturing realistic lags and errors in the management process. The ability to project outcomes across multiple plausible futures provides policymakers with a comprehensive picture of the robustness of candidate rules, which is precisely what CCAMLR requires as it develops a revised management strategy for Antarctic krill that balances conservation objectives with sustainable fishery development.
+
+\pagebreak
+
+\hypertarget{conclusions}{%
+\section{Conclusions}\label{conclusions}}
+
+\begin{itemize}
+\item
+  This report presents the first implementation of a \texttt{MSEtool}-based Management Strategy Evaluation for Antarctic krill in the Western Antarctic Peninsula, directly addressing a critical gap in CCAMLR's management framework for this keystone species. The analysis combines an SS3 conditioned operating model with closed-loop simulation to rigorously compare the current fixed catch management approach against a biomass responsive alternative under realistic scenarios of recruitment uncertainty and climate change.
+\item
+  A biologically consistent operating model for krill was successfully implemented in \texttt{MSEtool} v 3.7.5, overcoming species-specific technical challenges including the rescaling of unfished recruitment parameters and the incorporation of age-structured natural mortality and recruitment dynamics. The 9-OM factorial experiment meaningfully spans the range of uncertainty in recruitment variability (0.8 to 1.5) and potential productivity changes (\(\Delta R_0\) from 0\% to \(-40\%\)) that are plausible given current climate projections and observed recruitment trends in the WAP.
+\item
+  The results carry clear implications for CCAMLR policy. Under baseline productivity conditions, the current fixed catch of 145,000 t sustains adequate conservation performance, with median spawning stock remaining above the CCAMLR target of 0.75\(B_0\) across most scenarios. However, the framework reveals a critical vulnerability: when recruitment productivity declines by 20--40\% , plausible under moderate to severe climate change , the fixed catch rule rapidly deteriorates, with probability of meeting conservation targets falling below 50\% in high-variability scenarios. In contrast, a simple biomass-proportional rule (5\% of estimated stock size) maintains substantially more robust conservation performance across all tested futures. The proportional rule achieves this robustness through automatic feedback, reducing harvest when biomass declines while allowing increases during favorable years, thereby adapting to the underlying shifts in population productivity that the fixed catch cannot address.
+\item
+  These findings align with CCAMLR's broader strategic objective of developing feedback-based management systems that can navigate long-term environmental change while maintaining ecosystem function. The MSE framework provides a transparent, quantitative foundation for this transition. However, implementation requires continued investment in accurate biomass monitoring , the proportional rule's effectiveness depends critically on reliable annual surveys , and a willingness to adjust trigger levels annually in response to stock status assessments. The results also underscore the importance of integrating climate science into fisheries management: the MSE clearly demonstrates that management strategies developed for a stationary climate may fail once productivity declines, and that forward-looking management design must account for plausible shifts in biological parameters.
+\item
+  Future refinements should incorporate spatial heterogeneity across CCAMLR sub-areas, explicit environmental recruitment links, and more sophisticated observation error models reflecting the actual structure of CCAMLR surveys. Nevertheless, this analysis provides a rigorous methodological foundation and concrete quantitative evidence that can inform CCAMLR's revision of the krill management strategy. By demonstrating the feasibility and utility of closed-loop simulation for a data-rich species like krill, this work also contributes to broader efforts to operationalize ecosystem-based adaptive management in Southern Ocean fisheries.
+\end{itemize}
+
+\pagebreak
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+\hypertarget{refs}{}
+\begin{CSLReferences}{1}{0}
+\leavevmode\vadjust pre{\hypertarget{ref-Atkinson2019a}{}}%
+Atkinson, A., Hill, S., Pakhomov, E., Siegel, V., Reiss, C., Loeb, V. J., Steinberg, D., Schmidt, K., Tarling, G., Gerrish, L., \& Sailley, S. (2019). {Krill (Euphausia superba) distribution contracts southward during rapid regional warming}. \emph{Nature Climate Change}, \emph{9}(2), 142--147. \url{https://doi.org/10.1038/s41558-018-0370-z}
+
+\leavevmode\vadjust pre{\hypertarget{ref-CCAMLR2021a}{}}%
+CCAMLR. (2021). \emph{{CONSERVATION MEASURE 51-07. Interim distribution of the trigger level in the fishery for}} (Vol. 7, pp. 3--4).
+
+\leavevmode\vadjust pre{\hypertarget{ref-openMSE}{}}%
+Hordyk, A., Huynh, Q., \& Carruthers, T. (2024). \emph{openMSE: Easily install and load the 'openMSE' packages}. \url{https://CRAN.R-project.org/package=openMSE}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Kawaguchi2024}{}}%
+Kawaguchi, S., Atkinson, A., Bahlburg, D., Bernard, K. S., Cavan, E. L., Cox, M. J., Hill, S. L., Meyer, B., \& Veytia, D. (2023). {Climate change impacts on Antarctic krill behaviour and population dynamics}. \emph{Nature Reviews Earth and Environment}, \emph{5}(1), 43--58. \url{https://doi.org/10.1038/s43017-023-00504-y}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Mardones2025}{}}%
+Mardones, M., Jarvis Mason, E. T., Santa Cruz, F., Watters, G., \& Cárdenas, C. A. (2025). Disparate estimates of intrinsic productivity for antarctic krill across small spatial scales, under a rapidly changing ocean. \emph{bioRxiv}. \url{https://doi.org/10.1101/2025.03.27.645857}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Mardones2023}{}}%
+Mardones, Mauricio, Krüger, L., Cruz, F. S., Cárdenas, C. A., \& Watters, G. (2023). \emph{{Integrated approach to modeling krill population dynamics in Western Antarctic Peninsula. Spatial and ecosystem considerations. WG-SAM-2024/26}} (p. 32). Commission for the Conservation of Antarctic Marine Living Resources.
+
+\leavevmode\vadjust pre{\hypertarget{ref-McBride2021}{}}%
+McBride, M., Schram Stokke, O., Renner, A., Krafft, B., Bergstad, O., Biuw, M., Lowther, A., \& Stiansen, J. (2021). {Antarctic krill Euphausia superba: spatial distribution, abundance, and management of fisheries in a changing climate}. \emph{Marine Ecology Progress Series}, \emph{668}, 185--214. \url{https://doi.org/10.3354/meps13705}
+
+\leavevmode\vadjust pre{\hypertarget{ref-WGEMM2439}{}}%
+Meyer, B., Kawaguchi, S., \& SEKG Group. (2024). \emph{{Further development of the Krill stock hypothesis (KSH) for CCAMLR Area 48: REPORT of the online workshop of the SCAR Krill Expert Group (SKEG). WG-EMM}}. \emph{March}, 8--11.
+
+\leavevmode\vadjust pre{\hypertarget{ref-Perry2019}{}}%
+Perry, F. A., Atkinson, A., Sailley, S. F., Tarling, G. A., Hill, S. L., Lucas, C. H., \& Mayor, D. J. (2019). {Habitat partitioning in Antarctic krill: Spawning hotspots and nursery areas}. \emph{PLoS ONE}, \emph{14}(7), 1--25. \url{https://doi.org/10.1371/journal.pone.0219325}
+
+\leavevmode\vadjust pre{\hypertarget{ref-R-base}{}}%
+R Core Team. (2024). \emph{R: A language and environment for statistical computing}. R Foundation for Statistical Computing. \url{https://www.R-project.org/}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Thanassekos2014}{}}%
+Thanassekos, S., Cox, M. J., \& Reid, K. (2014). {Investigating the effect of recruitment variability on length-based recruitment indices for antarctic krill using an individual-based population dynamics model}. \emph{PLoS ONE}, \emph{9}(12), 1--20. \url{https://doi.org/10.1371/journal.pone.0114378}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Warwick-Evans2022}{}}%
+Warwick-Evans, V., Constable, A., Dalla Rosa, L., Secchi, E. R., Seyboth, E., \& Trathan, P. N. (2022). {Using a risk assessment framework to spatially and temporally spread the fishery catch limit for Antarctic krill in the west Antarctic Peninsula: A template for krill fisheries elsewhere}. \emph{Frontiers in Marine Science}, \emph{9}(November). \url{https://doi.org/10.3389/fmars.2022.1015851}
+
+\leavevmode\vadjust pre{\hypertarget{ref-Zhao2023}{}}%
+Zhao, X., Collins, M., Watters, G. M., \& Ziegler, P. (2023). \emph{{CCAMLR's revised krill fishery management approach in Subareas 48.1 to 48.4 as progressed from 2019 to 2022. WG-EMM-2023/03}}. CCAMLR.
+
+\end{CSLReferences}
+
+\pagebreak
+
+\hypertarget{appendix-key-r-code}{%
+\section{Appendix: Key R Code}\label{appendix-key-r-code}}
+
+\hypertarget{r0-scaling}{%
+\subsection{R0 Scaling}\label{r0-scaling}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# SPR with plus group at maxage (MSEtool convention)}
+\NormalTok{l\_spr }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\FunctionTok{cumprod}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{M\_all[}\SpecialCharTok{{-}}\FunctionTok{length}\NormalTok{(M\_all)])))}
+\NormalTok{l\_spr[}\FunctionTok{length}\NormalTok{(l\_spr)] }\OtherTok{\textless{}{-}}\NormalTok{ l\_spr[}\FunctionTok{length}\NormalTok{(l\_spr)] }\SpecialCharTok{/}\NormalTok{ (}\DecValTok{1} \SpecialCharTok{{-}} \FunctionTok{exp}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{M\_all[}\FunctionTok{length}\NormalTok{(M\_all)]))}
+\NormalTok{SPR\_0  }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(l\_spr }\SpecialCharTok{*}\NormalTok{ W\_all }\SpecialCharTok{*}\NormalTok{ Mat\_all)  }\CommentTok{\# tonnes per virgin recruit}
+\NormalTok{R0\_mse }\OtherTok{\textless{}{-}} \FunctionTok{round}\NormalTok{(B0 }\SpecialCharTok{/}\NormalTok{ SPR\_0)            }\CommentTok{\# R0 consistent with B0\_SS3}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{perr_y-construction}{%
+\subsection{Perr\_y Construction}\label{perr_y-construction}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{build\_perr\_y }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(sigmaR\_i, AC\_i, }\AttributeTok{seed\_i =} \DecValTok{42}\NormalTok{) \{}
+  \CommentTok{\# Pre{-}history: maxage columns}
+\NormalTok{  Perr\_pre  }\OtherTok{\textless{}{-}} \FunctionTok{matrix}\NormalTok{(}\FunctionTok{exp}\NormalTok{(}\FunctionTok{rnorm}\NormalTok{(n\_sim }\SpecialCharTok{*}\NormalTok{ maxage, }\DecValTok{0}\NormalTok{, }\FloatTok{0.1}\NormalTok{)),}
+                      \AttributeTok{nrow =}\NormalTok{ n\_sim, }\AttributeTok{ncol =}\NormalTok{ maxage)}
+  \CommentTok{\# Projection: AR1 log{-}normal}
+\NormalTok{  Perr\_proj }\OtherTok{\textless{}{-}} \FunctionTok{sim\_perr\_proj}\NormalTok{(n\_sim, n\_proyear, sigmaR\_i, AC\_i, }\AttributeTok{seed =}\NormalTok{ seed\_i)}
+  \CommentTok{\# Combine: [nsim, maxage] | [nsim, nyears] | [nsim, proyears]}
+  \FunctionTok{cbind}\NormalTok{(Perr\_pre, Perr\_hist, Perr\_proj)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{proportional-hcr}{%
+\subsection{Proportional HCR}\label{proportional-hcr}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{HCR\_proportional }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x, Data, }\AttributeTok{reps =} \DecValTok{1}\NormalTok{, ...) \{}
+\NormalTok{  ind   }\OtherTok{\textless{}{-}}\NormalTok{ Data}\SpecialCharTok{@}\NormalTok{Ind[x, ]}
+\NormalTok{  B\_rel }\OtherTok{\textless{}{-}}\NormalTok{ ind[}\FunctionTok{max}\NormalTok{(}\FunctionTok{which}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(ind)))]  }\CommentTok{\# last non{-}NA relative index}
+\NormalTok{  B\_abs }\OtherTok{\textless{}{-}}\NormalTok{ B\_rel }\SpecialCharTok{*}\NormalTok{ B0\_MSE                }\CommentTok{\# scale to tonnes}
+\NormalTok{  TAC   }\OtherTok{\textless{}{-}} \FunctionTok{max}\NormalTok{(B\_abs }\SpecialCharTok{*} \FloatTok{0.05}\NormalTok{, }\DecValTok{0}\NormalTok{)          }\CommentTok{\# 5\% of absolute biomass}
+\NormalTok{  Rec   }\OtherTok{\textless{}{-}} \FunctionTok{new}\NormalTok{(}\StringTok{"Rec"}\NormalTok{)}
+\NormalTok{  Rec}\SpecialCharTok{@}\NormalTok{TAC }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(TAC, reps)}
+  \FunctionTok{return}\NormalTok{(Rec)}
+\NormalTok{\}}
+\FunctionTok{class}\NormalTok{(HCR\_proportional) }\OtherTok{\textless{}{-}} \StringTok{"MP"}
+\end{Highlighting}
+\end{Shaded}
+
+
+\end{document}

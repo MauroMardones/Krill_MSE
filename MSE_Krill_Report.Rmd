@@ -1,12 +1,12 @@
 ---
 title: "![](logoUMAG.jpg){width=4cm}"
 output:
-  pdf_document:
+  bookdown::pdf_document2:
     includes:
       before_body: titulo2.sty
     keep_tex: yes
     number_sections: yes
-    toc: true
+    toc: false          # ← CAMBIAR A FALSE
     toc_depth: 3
 bibliography: SA_krill.bib
 csl: apa.csl
@@ -49,24 +49,15 @@ library(tidyverse)
 
 # Introduction
 
-This technical report documents the construction and evaluation of a Management Strategy Evaluation (MSE) framework for Antarctic krill (*Euphausia superba*) in the Western Antarctic Peninsula (WAP), implemented using the `MSEtool` / `openMSE` platform [@huynh2020mseval]. The framework represents a closed-loop simulation that links an Operating Model (OM) — representing the "true" population dynamics — with Management Procedures (MPs) representing alternative harvest control rules (HCRs).
+Antarctic krill (*Euphausia superba*) is the keystone species of the Southern Ocean ecosystem and supports one of the largest single-species fisheries globally [@Atkinson2019a; @McBride2021]. The fishery is managed by the Commission for the Conservation of Antarctic Marine Living Resources (CCAMLR), which has adopted an ecosystem-based approach emphasizing precaution and the maintenance of ecosystem balance [@Zhao2023]. Currently, CCAMLR manages the krill fishery in the Western Antarctic Peninsula (WAP, Statistical Area 48) under a fixed total allowable catch called *"trigger level"* of 145,000 tonnes per year for SubArea 48.1 [@CCAMLR2021a]. This precautionary limit was established to ensure that krill fishing does not substantially reduce the food availability for higher predators (penguins, seals, whales) that depend critically on krill biomass for survival and reproduction [@Kawaguchi2024; @Warwick-Evans2022].
 
-Antarctic krill is the keystone species of the Southern Ocean ecosystem and supports one of the largest single-species fisheries managed by the Commission for the Conservation of Antarctic Marine Living Resources (CCAMLR). Despite its ecological and commercial importance, krill management has historically relied on precautionary fixed catch limits rather than biomass-based dynamic feedback rules. This analysis tests the robustness of the current CCAMLR fixed catch level (CC 145,000 t) against a proportional biomass-based HCR across a grid of operating model scenarios representing uncertainty in recruitment variability and long-term productivity.
+The fixed catch approach, while simple and transparent, presents significant challenges in the face of environmental variability and long-term climate change. Krill recruitment is highly sensitive to oceanographic conditions, particularly sea ice extent and water temperature, which exhibit high interannual variability and are subject to long-term climate forcing in the WAP [@Atkinson2019a]. A static catch limit cannot adapt to underlying changes in population productivity , it maintains the same absolute harvest regardless of whether recruitment is high or low, leading to either excessive depletion during poor recruitment years or forgone yield during abundant years. Moreover, evidence from recent decades suggests potential long-term declines in krill recruitment linked to reduced winter sea ice duration, yet the fixed *trigger level* provides no mechanism to adjust harvest in response to these changing conditions. This disconnect between a rigid management rule and a highly dynamic ecosystem has prompted CCAMLR to explore more adaptive harvest strategies that can respond to observed stock status while maintaining conservation objectives.
 
-The simulation is structured around a $3 \times 3$ grid of OMs crossing three levels of recruitment variability ($\sigma_R \in \{0.8, 1.2, 1.5\}$) with three levels of recruitment productivity shift ($\Delta R_0 \in \{0\%, -20\%, -40\%\}$), representing potential climate-driven declines in krill productivity. Each OM is run against two MPs over a 30-year projection period (2019–2048).
+This report presents a Management Strategy Evaluation (MSE) framework designed to address this challenge. The MSE approach is a simulation-based methodology that tests candidate harvest control rules (HCRs) against multiple plausible future scenarios, quantifying their robustness under uncertainty and their ability to meet both conservation and yield objectives. By structuring management as a closed-loop system in which fishing recommendations respond to observed stock status, adaptive HCRs can theoretically achieve better trade-offs between maintaining ecosystem services and enabling economically viable harvest. This analysis implements an MSE for Antarctic krill using the `MSEtool` / `openMSE` platform [@openMSE], conditioning the operating model on a state-of-the-art integrated stock assessment built with Stock Synthesis 3 (SS3) [@Mardones2023]. The framework allows us to evaluate the current fixed catch rule alongside a biomass-responsive alternative under a realistic grid of recruitment variability and climate scenarios, providing quantitative evidence to inform CCAMLR's ongoing revision of krill management strategy.
 
-## Objectives
+The analysis encompasses several interconnected objectives: (i) to build a biologically consistent age-structured Operating Model for Antarctic krill using SS3 outputs as conditioning data, accounting for the unique biology of the species (short lifespan, high natural mortality, age-structured population); (ii) to implement and validate the `MSEtool` platform for krill, addressing technical challenges arising from the mismatch between SS3's unfished recruitment scale and MSEtool's internal biomass calculations; (iii) to evaluate the performance of the current fixed catch rule (CC 145,000 t) and a proportional biomass-based HCR across a $3 \times 3$ grid of operating model scenarios representing uncertainty in recruitment variability and long-term productivity change; and (iv) to quantify HCR performance using CCAMLR-relevant reference points and metrics that balance conservation objectives (maintaining spawning stock above critical thresholds) with yield considerations.
 
-The specific objectives of this analysis are:
-
-1. To build a biologically consistent Operating Model for Antarctic krill using SS3 [@methot2013stock] outputs as conditioning data.
-2. To implement and validate the `MSEtool` platform for krill, addressing species-specific challenges (age structure with maximum age 8, length-weight scale in tonnes).
-3. To evaluate and compare two candidate HCRs — a fixed catch rule and a proportional biomass rule — across a grid of climate scenarios.
-4. To quantify HCR performance using CCAMLR-relevant metrics (probability of exceeding target and limit reference points, mean yield).
-
-## Software
-
-All analyses were conducted in R [@R-base] using `MSEtool` version 3.7.5 [@huynh2020mseval], `r4ss` [@r4ss] for SS3 output reading, `tidyverse` [@tidyverse] for data manipulation, and `patchwork` [@patchwork] for figure composition.
+The simulation spans a 30-year projection period (2019–2048) structured around nine operating models crossing three levels of recruitment variability ($\sigma_R \in \{0.8, 1.2, 1.5\}$) with three scenarios of recruitment productivity shift ($\Delta R_0 \in \{0\%, -20\%, -40\%\}$) representing potential climate-driven declines. All analyses were conducted in R [@R-base] using `MSEtool` version 3.7.5, `r4ss` for SS3 integration, and visualization packages from the tidyverse ecosystem.
 
 \pagebreak
 
@@ -94,7 +85,7 @@ where $w_{a,t}$ and $m_{a,t}$ are weight-at-age and maturity-at-age.
 
 ## Biological Parameters
 
-Krill biological parameters were derived from the fitted SS3 assessment model for the WAP (Figure \@ref(fig:bio)). The maximum biological age was set to $a_{max} = 8$ years, consistent with observed krill longevity in the WAP [@atkinson2006krill]. Growth follows the Von Bertalanffy equation:
+Krill biological parameters were derived from the fitted SS3 assessment model for the WAP (Figure \@ref(fig:bio)). The maximum biological age was set to $a_{max} = 8$ years, consistent with observed krill longevity in the WAP [@Thanassekos2014]. Growth follows the Von Bertalanffy equation:
 
 $$L_a = L_\infty \left(1 - e^{-K(a - t_0)}\right)$$
 
@@ -125,7 +116,7 @@ A fundamental challenge when linking an SS3 model to `MSEtool` is the incompatib
 
 $$B_0^{MSE} = R_0 \cdot \phi_0$$
 
-where $\phi_0$ is the spawning potential ratio per recruit (tonnes per recruit). Using the SS3 $R_0$ directly ($3.69 \times 10^8$ individuals) with weight-at-age expressed in tonnes produces an internal $B_0^{MSE}$ of approximately 79 t — five orders of magnitude below the true $B_0 \approx 2{,}029{,}000$ t estimated by the assessment.
+where $\phi_0$ is the spawning potential ratio per recruit (tonnes per recruit). Using the SS3 $R_0$ directly ($3.69 \times 10^8$ individuals) with weight-at-age expressed in tonnes produces an internal $B_0^{MSE}$ of approximately 79 t , five orders of magnitude below the true $B_0 \approx 2{,}029{,}000$ t estimated by the assessment.
 
 The solution applied here is to back-calculate $R_0^{MSE}$ from the correct SS3 $B_0$:
 
@@ -158,12 +149,12 @@ To represent uncertainty in future krill productivity, a $3 \times 3$ factorial 
 | 0.8 | 0% | Low variability, no climate effect |
 | 1.2 | 0% | Base variability, no climate effect |
 | 1.5 | 0% | High variability, no climate effect |
-| 0.8 | −20% | Low variability, moderate climate impact |
-| 1.2 | −20% | Base variability, moderate climate impact |
-| 1.5 | −20% | High variability, moderate climate impact |
-| 0.8 | −40% | Low variability, severe climate impact |
-| 1.2 | −40% | Base variability, severe climate impact |
-| 1.5 | −40% | High variability, severe climate impact |
+| 0.8 | -20% | Low variability, moderate climate impact |
+| 1.2 | -20% | Base variability, moderate climate impact |
+| 1.5 | -20% | High variability, moderate climate impact |
+| 0.8 | -40% | Low variability, severe climate impact |
+| 1.2 | -40% | Base variability, severe climate impact |
+| 1.5 | -40% | High variability, severe climate impact |
 
 Table: The 9-OM grid used in the MSE simulation.
 
@@ -227,16 +218,16 @@ Before running the full MSE, a series of diagnostics were conducted to verify th
 
 1. **B0 check**: Confirmed that $R_0^{MSE} \times \phi_0 \approx B_0^{SS3}$ (within numerical tolerance).
 2. **Virgin equilibrium table**: Verified that the age-structured equilibrium biomass matched expectations given $R_0^{MSE}$ and the biological parameters.
-3. **Quick simulation**: Ran a 3-simulation, 5-year test with `FMSYref` and confirmed that initial SSB/B0 $\approx D_{2018} = 0.808$.
+3. **Quick simulation**: Ran a 3-simulation, 5-year test with `FMSYref` and confirmed that initial SSB/B0 $\approx D_{1991} = 0.808$.
 
 The diagnostic block produced the following key quantities:
 
 ```
 B0 SS3:            2,028,880 t
-B0 MSEtool:        2,028,880 t  (✓ consistent)
-Initial SSB:       1,640,353 t  (D_2018 × B0)
+B0 MSEtool:        2,028,880 t  (ok consistent)
+Initial SSB:       1,640,353 t  (D_2000 × B0)
 CC145/SSB_init:       0.0088    (harvesting < 1% of SSB — sustainable)
-SSB/B0 year 1:        0.865     (close to D_2018 = 0.808 ✓)
+SSB/B0 year 1:        0.865     (close to D_1991 = 0.808 ok)
 ```
 
 The small discrepancy between observed SSB/B0 at year 1 ($\approx 0.865$) and $D_{2018} = 0.808$ arises because `runMSE` applies a small stochastic perturbation at initialization, which is expected behaviour.
@@ -249,6 +240,7 @@ The small discrepancy between observed SSB/B0 at year 1 ($\approx 0.865$) and $D
 
 Figure \@ref(fig:worm) shows the projected relative spawning biomass (SSB/$B_0$) trajectories over the 30-year projection period for both MPs across the 9 OM scenarios. The black line shows the SS3 historical SSB/$B_0$ trajectory (1991–2018) as a reference. The vertical dotted line marks the start of the projection. The green dashed horizontal line represents the CCAMLR target ($0.75\,B_0$) and the red dashed line the critical limit ($0.20\,B_0$).
 
+
 ```{r worm, fig.cap="Relative spawning biomass trajectories (SSB/B0) across the 9-OM × 2-MP grid. Ribbons show the 5–95th and 25–75th percentile range across 48 simulations. Black line: SS3 historical estimate. Dashed lines: CCAMLR target (green, 0.75 B0) and limit (red, 0.20 B0).", out.width="100%"}
 knitr::include_graphics("fig/fig_wormplot.png")
 ```
@@ -256,6 +248,7 @@ knitr::include_graphics("fig/fig_wormplot.png")
 Under the no-climate-change scenario ($\Delta R_0 = 0\%$), both HCRs maintain SSB well above the CCAMLR target for most of the projection period, though with substantial uncertainty under high variability ($\sigma_R = 1.5$). The proportional HCR shows tighter biomass distributions relative to the constant catch rule, as it dynamically adjusts TAC in response to biomass.
 
 Under severe climate impact ($\Delta R_0 = -40\%$), the fixed catch rule (CC145) shows increasing risk of declining below the target, particularly at high recruitment variability. The proportional HCR demonstrates greater robustness by automatically reducing catch when biomass declines.
+
 
 ## Trade-off Analysis
 
@@ -297,51 +290,27 @@ knitr::include_graphics("fig/fig_catch.png")
 
 # Discussion
 
-## On the MSEtool Implementation for Krill
+The implementation of `MSEtool` for Antarctic krill required several non-trivial adaptations relative to standard finfish applications, reflecting the unique biology of this short-lived, high-turnover species. Krill reach a maximum age of only 8 years, which is unusually short for an MSEtool application and necessitated careful verification of internal array dimension conventions. The weight-at-age scale posed a particular challenge: because individual krill weigh on the order of $10^{-9}$ tonnes, the SS3 unfished recruitment ($R_0 \sim 3.69 \times 10^8$ individuals) becomes completely inconsistent with MSEtool's internal biomass calculations if applied directly. The $R_0$ rescaling procedure described in the methods section proved essential for achieving numerically stable and biologically meaningful projections. Additionally, krill exhibit strongly age-structured natural mortality, with post-larval stages experiencing rates two to three times higher than adults, which was encoded via custom age-specific mortality arrays. Recruitment is highly variable with substantial interannual persistence driven by environmental dynamics, captured here through an AR(1) structure with realistic variability parameters.
 
-Implementing `MSEtool` for Antarctic krill required several non-trivial adaptations relative to standard finfish applications:
+The performance comparison between the two HCR (Harvest Control Rules) reveals important trade-offs relevant to CCAMLR management. The current fixed catch rule (CC145) represents a robust management approach that has provided stable harvest for decades and is straightforward to implement and monitor. However, the MSE results demonstrate that under conditions of declining recruitment productivity , plausible under future climate change scenarios , the fixed catch becomes increasingly untenable for conservation objectives. Specifically, the probability of maintaining spawning stock above the CCAMLR target (0.75$B_0$) deteriorates markedly in the $-40\%$ productivity scenario when combined with high recruitment variability. This occurs not because 145,000 t is an inherently excessive harvest, but because a static catch level cannot adapt to underlying reductions in population productivity. In contrast, the proportional biomass-based HCR automatically reduces harvest pressure as recruitment declines and biomass contracts, maintaining substantially higher probability of meeting conservation targets across all climate scenarios. This self-regulating property aligns well with the adaptive management principles that CCAMLR has identified as necessary for krill management in the coming decades, particularly given mounting evidence of climate-driven changes in Southern Ocean productivity.
 
-**Age structure.** Krill live at most 8 years ($a_{max} = 8$), which is unusually short for an MSEtool application. The `maxage` slot was set to 8 without phantom ages, and array dimensions were explicitly verified to match the `maxage+1` column convention used internally by MSEtool.
+The results do come with important caveats. The operating model is spatially aggregated, treating the WAP as a single unit, when in fact krill are patchily distributed across multiple Management Units (MUs) inside 48.1 SubArea with distinct dynamics and survey coverage [@Mardones2025; @Perry2019; @WGEMM2439]. Environmental forcing is represented parametrically through recruitment shifts rather than explicitly linked to physical-biological covariates such as Clorophyll (primary production). The observation model assumes a proportional biomass index with constant coefficient of variation, whereas real CCAMLR survey data exhibit complex spatio-temporal variability that may warrant more sophisticated treatment. Future work should address these limitations by developing spatially explicit operating models, incorporating environmental covariates as direct drivers of recruitment dynamics, and refining the observation model to reflect the actual structure of CCAMLR survey design and uncertainty. The framework also assumes that annual biomass monitoring data are available with 20% observational error; this assumption requires robust and continued commitment to krill survey programs.
 
-**Weight-at-age scale.** Because krill weigh on the order of $10^{-9}$ tonnes per individual, the SS3 $R_0$ ($\sim 3.69 \times 10^8$ individuals) is completely inconsistent with the MSEtool internal $B_0$ calculation when weights are expressed in tonnes. The $R_0$ rescaling described in Section 2.3 was essential for obtaining meaningful biomass projections.
-
-**Natural mortality.** Unlike most finfish, krill exhibit strongly age-structured natural mortality, with post-larval stages (ages 0–2) experiencing $M$ two to three times higher than adults. Encoding this age structure via `M_ageArray` in `cpars` was critical for a realistic age distribution at equilibrium.
-
-**Recruitment autocorrelation.** Krill recruitment is highly variable and exhibits interannual persistence driven by sea ice dynamics [@flores2012impact]. The AR(1) recruitment structure with $\rho = 0.5$ and $\sigma_R \in \{0.8, 1.2, 1.5\}$ captures this range of observed and projected variability.
-
-## On the Harvest Control Rules
-
-The CC145 rule represents the current CCAMLR management approach for krill in Area 48. Its simplicity and predictability are practical advantages for international fisheries management. However, this analysis demonstrates that a fixed catch level becomes increasingly risky as recruitment productivity declines under climate scenarios, particularly when variability is also elevated.
-
-The proportional HCR, despite its simple structure (5% of estimated biomass), demonstrates substantially better conservation performance across all climate scenarios. Its self-regulating nature — automatically reducing catches as the stock declines — aligns with the adaptive management principles recommended by CCAMLR for developing a new feedback-based management system for krill [@everson2012krill].
-
-## Limitations and Future Directions
-
-Several limitations of the current framework should be acknowledged:
-
-1. The OM uses a single-area, single-sex age-structured model, while krill in the WAP are spatially distributed across multiple sub-areas with heterogeneous dynamics [@atkinson2019krill].
-
-2. Environmental covariates (sea ice extent, sea surface temperature) were not explicitly incorporated in the OM projection; instead, their effect is captured parametrically through the $\Delta R_0$ scenarios.
-
-3. The observation model assumes a proportional biomass index with fixed CV = 20%, whereas CCAMLR survey data exhibit complex spatio-temporal structure that may warrant a more sophisticated observation model.
-
-Future work should explore spatially explicit OMs, environmental recruitment links, and more elaborate observation error structures to improve the realism and policy relevance of the MSE framework.
+Despite these limitations, the **MSE framework** provides a transparent and quantitative foundation for evaluating management alternatives under uncertainty. Unlike purely theoretical or single-stock analyses, the closed-loop simulation directly incorporates feedback between observation, assessment, and implementation, capturing realistic lags and errors in the management process. The ability to project outcomes across multiple plausible futures provides policymakers with a comprehensive picture of the robustness of candidate rules, which is precisely what CCAMLR requires as it develops a revised management strategy for Antarctic krill that balances conservation objectives with sustainable fishery development.
 
 \pagebreak
 
 # Conclusions
 
-This technical report presents the first implementation of a `MSEtool`-based Management Strategy Evaluation for Antarctic krill in the Western Antarctic Peninsula. The main conclusions are:
+- This report presents the first implementation of a `MSEtool`-based Management Strategy Evaluation for Antarctic krill in the Western Antarctic Peninsula, directly addressing a critical gap in CCAMLR's management framework for this keystone species. The analysis combines an SS3 conditioned operating model with closed-loop simulation to rigorously compare the current fixed catch management approach against a biomass responsive alternative under realistic scenarios of recruitment uncertainty and climate change.
 
-1. A biologically consistent OM for krill was successfully implemented in `MSEtool` 3.7.5, addressing species-specific challenges including the $R_0$ scale mismatch, age-structured natural mortality, and `Perr_y` dimension requirements.
+- A biologically consistent operating model for krill was successfully implemented in `MSEtool` v 3.7.5, overcoming species-specific technical challenges including the rescaling of unfished recruitment parameters and the incorporation of age-structured natural mortality and recruitment dynamics. The 9-OM factorial experiment meaningfully spans the range of uncertainty in recruitment variability (0.8 to 1.5) and potential productivity changes ($\Delta R_0$ from 0% to $-40\%$) that are plausible given current climate projections and observed recruitment trends in the WAP.
 
-2. The 9-OM grid captures a realistic range of uncertainty in recruitment variability and long-term productivity, representing plausible climate-driven trajectories for krill.
+- The results carry clear implications for CCAMLR policy. Under baseline productivity conditions, the current fixed catch of 145,000 t sustains adequate conservation performance, with median spawning stock remaining above the CCAMLR target of 0.75$B_0$ across most scenarios. However, the framework reveals a critical vulnerability: when recruitment productivity declines by 20–40% , plausible under moderate to severe climate change , the fixed catch rule rapidly deteriorates, with probability of meeting conservation targets falling below 50% in high-variability scenarios. In contrast, a simple biomass-proportional rule (5% of estimated stock size) maintains substantially more robust conservation performance across all tested futures. The proportional rule achieves this robustness through automatic feedback, reducing harvest when biomass declines while allowing increases during favorable years, thereby adapting to the underlying shifts in population productivity that the fixed catch cannot address.
 
-3. The fixed catch rule (CC145) maintains adequate conservation performance under current productivity levels but becomes increasingly risky under moderate to severe productivity declines ($\Delta R_0 = -20\%$ to $-40\%$).
+- These findings align with CCAMLR's broader strategic objective of developing feedback-based management systems that can navigate long-term environmental change while maintaining ecosystem function. The MSE framework provides a transparent, quantitative foundation for this transition. However, implementation requires continued investment in accurate biomass monitoring , the proportional rule's effectiveness depends critically on reliable annual surveys , and a willingness to adjust trigger levels annually in response to stock status assessments. The results also underscore the importance of integrating climate science into fisheries management: the MSE clearly demonstrates that management strategies developed for a stationary climate may fail once productivity declines, and that forward-looking management design must account for plausible shifts in biological parameters.
 
-4. The proportional HCR consistently outperforms CC145 on conservation metrics across all climate scenarios, at the cost of more variable and generally lower expected yields.
-
-5. These results support the development of a biomass-responsive harvest control rule for krill under CCAMLR, while highlighting the importance of reliable biomass monitoring to inform annual TAC adjustments.
+- Future refinements should incorporate spatial heterogeneity across CCAMLR sub-areas, explicit environmental recruitment links, and more sophisticated observation error models reflecting the actual structure of CCAMLR surveys. Nevertheless, this analysis provides a rigorous methodological foundation and concrete quantitative evidence that can inform CCAMLR's revision of the krill management strategy. By demonstrating the feasibility and utility of closed-loop simulation for a data-rich species like krill, this work also contributes to broader efforts to operationalize ecosystem-based adaptive management in Southern Ocean fisheries.
 
 \pagebreak
 

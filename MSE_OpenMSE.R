@@ -103,6 +103,25 @@ cat("Dev range:", round(range(rec_devs), 3), "\n")
 # Historical Perr: multipliers (linear scale, not log)
 Perr_hist_vec <- exp(rec_devs)
 
+# Historical recruitment from SS3 — use exp_recr (expected recruits in numbers)
+rec_numbers_ss3 <- rep$recruit |>
+  filter(Yr >= yr_start, Yr <= yr_final) |>
+  arrange(Yr) |>
+  pull(exp_recr)  # Expected recruits (individuals) from SS3
+
+# Convert to biomass of age-0: numbers × weight-at-age-0
+rec_biomass_ss3 <- rec_numbers_ss3 * W_all[1]  # tonnes
+
+# Data frame for historical recruitment reference line
+hist_rec <- data.frame(
+  year = seq(yr_start, yr_final),
+  rec_tonnes = rec_biomass_ss3 / 1e3  # convert to thousands of tonnes
+)
+
+cat("Historical recruitment (age-0 biomass, kt):\n")
+cat("  Mean:", round(mean(hist_rec$rec_tonnes), 0), "kt\n")
+cat("  Range:", round(min(hist_rec$rec_tonnes), 0), "–", round(max(hist_rec$rec_tonnes), 0), "kt\n")
+
 # Historical matrix: nsim × nyears — small inter-sim variability
 Perr_hist <- matrix(rep(Perr_hist_vec, n_sim),
                     nrow = n_sim, ncol = nyears, byrow = TRUE)
@@ -626,6 +645,9 @@ p_worm <- ggplot(worm_data, aes(x = year)) +
   theme(panel.grid.minor  = element_blank(),
         strip.background  = element_blank(),
         strip.text        = element_text(size = 9, face = "bold"),
+        axis.text.x       = element_text(angle = 90, 
+                                         size=10,
+                                         hjust = 1),
         legend.position   = "bottom")
 
 # ── Trade-off plot ───────────────────────────────────────────
@@ -719,6 +741,11 @@ p_catch <- ggplot(catch_data, aes(x = climate, y = catch_kt, fill = MP_label)) +
   theme_bw() +
   theme(panel.grid.minor = element_blank(), legend.position = "bottom")
 
+# ── Recruitment wormplot ────────────────────────────────────
+
+# Extract recruitment trajectories (age 0 numbers from N_ageArray)
+# N_ageArray dims: [nsim, n_mp, n_age, n_yr_proj]
+# Age 0 = first column of age dimension
 # ── Summary table ────────────────────────────────────────────
 
 tabla_df <- metrics |>
@@ -763,6 +790,7 @@ ggsave("fig/MSE_krill_metrics.png",  fig_extra, width = 16, height = 12, dpi = 1
 
 # Individual figures for RMD report
 ggsave("fig/fig_wormplot.png",   p_worm,     width = 14, height = 10, dpi = 150)
+#ggsave("fig/fig_recruitment.png", p_recruit,  width = 14, height = 10, dpi = 150)
 ggsave("fig/fig_tradeoff.png",   p_tradeoff, width = 10, height =  7, dpi = 150)
 ggsave("fig/fig_barplot.png",    p_barras,   width =  9, height =  6, dpi = 150)
 ggsave("fig/fig_cdf.png",        p_cdf,      width =  9, height =  6, dpi = 150)
@@ -771,6 +799,7 @@ ggsave("fig/fig_catch.png",      p_catch,    width =  9, height =  6, dpi = 150)
 cat("\n✅ fig/MSE_krill_openMSE.png\n")
 cat("✅ fig/MSE_krill_metrics.png\n")
 cat("✅ fig/fig_wormplot.png\n")
+#cat("✅ fig/fig_recruitment.png\n")
 cat("✅ fig/fig_tradeoff.png\n")
 cat("✅ fig/fig_barplot.png\n")
 cat("✅ fig/fig_cdf.png\n")
