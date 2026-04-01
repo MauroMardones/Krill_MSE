@@ -246,10 +246,35 @@ Spawning Stock Biomass is computed as:
 
 where \(w_{a,t}\) and \(m_{a,t}\) are weight-at-age and maturity-at-age.
 
+\hypertarget{mse-workflow-for-antarctic-krill}{%
+\subsection{MSE Workflow for Antarctic Krill}\label{mse-workflow-for-antarctic-krill}}
+
+Step 1 reads SS3 model outputs using r4ss: historical spawning biomass, recruitment deviations (1991--2018), and fishing mortality by fleet.
+
+Step 2 constructs age-structured biological arrays {[}nsim × 9 ages × 58 years{]} for weight-at-age, maturity, natural mortality, and selectivity.
+
+Step 3 generates projected recruitment deviations via an AR(1) log-normal process with scenario-specific variability and temporal autocorrelation.
+
+Step 4 assembles the Perr\_y array {[}48 × 66{]} concatenating three blocks: pre-history initialization (8 years), historical SS3 period (28 years), and AR1 projection (30 years).
+
+Step 5 extracts historical fishing mortality by summing fleet-specific F columns (F:\_1 through F:\_5) from SS3 output.
+
+Step 6 builds the base operating model using testOM as a structural template, overwriting biological parameters and cpars arrays with krill-specific values and SS3 conditioning.
+
+Step 7 creates a 3×3 factorial OM grid crossing recruitment variability (sigmaR = 0.8, 1.2, 1.5) with productivity shifts (R0 = 0\%, -20\%, -40\%), yielding nine operating model variants.
+
+Step 8 defines two management procedures: CC145 (fixed TAC = 145,000 t/year) and HCR\_proportional (TAC = 5\% of estimated absolute biomass).
+
+Step 9 runs the closed-loop MSE: 48 simulations × 9 OMs × 2 MPs, projecting population dynamics 30 years under management feedback.
+
+Step 10 computes CCAMLR-relevant performance metrics: P(SSB \textgreater{} 0.75 B0), P(SSB \textgreater{} 0.20 B0), mean annual catch, and final-year collapse probability.
+
+Step 11 generates publication-quality figures (wormplots, trade-off plots, performance summaries) saved to fig/ for integration into this report.
+
 \hypertarget{biological-parameters}{%
 \subsection{Biological Parameters}\label{biological-parameters}}
 
-Krill biological parameters were derived from the fitted SS3 assessment model for the WAP (Figure \ref{fig:bio}). The maximum biological age was set to \(a_{max} = 8\) years, consistent with observed krill longevity in the WAP (\protect\hyperlink{ref-Thanassekos2014}{Thanassekos et al., 2014}). Growth follows the Von Bertalanffy equation:
+Krill biological parameters were derived from the fitted SS3 assessment model for the WAP. The maximum biological age was set to \(a_{max} = 8\) years, consistent with observed krill longevity in the WAP (\protect\hyperlink{ref-Thanassekos2014}{Thanassekos et al., 2014}). Growth follows the Von Bertalanffy equation:
 
 \[L_a = L_\infty \left(1 - e^{-K(a - t_0)}\right)\]
 
@@ -350,11 +375,11 @@ Each OM retains the same biological parameters but differs in \(\sigma_R\) and \
 
 Two candidate MPs were evaluated:
 
-\textbf{HCR 1 --- Constant Catch (CC145):} Issues a fixed TAC of 145,000 t per year, corresponding to the current CCAMLR catch limit for krill in Area 48. This MP represents the status quo and requires no biomass information:
+\textbf{HCR 1 Constant Catch (CC145):} Issues a fixed TAC of 145,000 t per year, corresponding to the current CCAMLR catch limit for krill in Area 48. This MP represents the status quo and requires no biomass information:
 
 \[\text{TAC}_t = 145{,}000 \, \text{t}\]
 
-\textbf{HCR 2 --- Proportional Biomass Rule (HCR Proportional):} Issues a TAC proportional to the estimated biomass index, scaled to absolute biomass using \(B_0\):
+\textbf{HCR 2 Proportional Biomass Rule (HCR Proportional):} Issues a TAC proportional to the estimated biomass index, scaled to absolute biomass using \(B_0\):
 
 \[\text{TAC}_t = 0.05 \times B_{rel,t} \times B_0\]
 
@@ -447,7 +472,7 @@ The diagnostic block produced the following key quantities:
 B0 SS3:            2,028,880 t
 B0 MSEtool:        2,028,880 t  (ok consistent)
 Initial SSB:       1,640,353 t  (D_2000 × B0)
-CC145/SSB_init:       0.0088    (harvesting < 1% of SSB — sustainable)
+CC145/SSB_init:       0.0088    (harvesting < 1% of SSB  sustainable)
 SSB/B0 year 1:        0.865     (close to D_1991 = 0.808 ok)
 \end{verbatim}
 
