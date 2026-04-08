@@ -228,23 +228,9 @@ The simulation spans a 30-year projection period (2019--2048) structured around 
 \hypertarget{operating-model-framework}{%
 \subsection{Operating Model Framework}\label{operating-model-framework}}
 
-The Operating Model (OM) in \texttt{MSEtool} / \texttt{openMSE} is an age-structured population dynamics model that projects the fish population forward in time under a given management procedure. The OM is conditioned on historical data and biological parameters derived from the stock assessment, and is projected stochastically to evaluate MP performance under uncertainty.
+The Operating Model (OM) in \texttt{MSEtool} / \texttt{openMSE} is an age-structured population dynamics model that projects the krill population forward in time under a given management procedure. The OM is conditioned on historical data and biological parameters derived from the SS3 stock assessment, and is projected stochastically to evaluate MP performance under uncertainty.
 
-The general population dynamics follow:
-
-\[N_{a,t+1} = N_{a,t} \, e^{-(F_{a,t} + M_{a,t})}\]
-
-where \(N_{a,t}\) is numbers-at-age \(a\) in year \(t\), \(F_{a,t}\) is the age-specific fishing mortality, and \(M_{a,t}\) is the age-specific natural mortality. Recruitment is governed by a Beverton-Holt stock-recruitment relationship:
-
-\[R_t = \frac{4 h R_0 \, \text{SSB}_t}{B_0(1-h) + \text{SSB}_t(5h-1)} \cdot \epsilon_t\]
-
-where \(h\) is steepness, \(R_0\) and \(B_0\) are virgin recruitment and spawning biomass respectively, and \(\epsilon_t\) is a log-normal deviation with autocorrelation structure.
-
-Spawning Stock Biomass is computed as:
-
-\[\text{SSB}_t = \sum_a N_{a,t} \, w_{a,t} \, m_{a,t}\]
-
-where \(w_{a,t}\) and \(m_{a,t}\) are weight-at-age and maturity-at-age.
+The OM tracks numbers-at-age through a standard age-transition equation, applying age-specific fishing mortality and natural mortality at each timestep. Recruitment is generated annually according to a Beverton-Holt stock-recruitment relationship, which scales recruitment based on current spawning stock biomass and the steepness parameter. The spawning stock biomass each year is the sum of biomass across ages, weighted by maturity-at-age. These core equations are specified in detail in Appendix A. The key parameters---maximum age (8 years), age-specific natural mortality, weight-at-age, and growth rates---were derived from the SS3 assessment.
 
 \hypertarget{mse-workflow-for-antarctic-krill}{%
 \subsection{MSE Workflow for Antarctic Krill}\label{mse-workflow-for-antarctic-krill}}
@@ -274,26 +260,18 @@ Step 11 generates publication-quality figures (wormplots, trade-off plots, perfo
 \hypertarget{biological-parameters}{%
 \subsection{Biological Parameters}\label{biological-parameters}}
 
-Krill biological parameters were derived from the fitted SS3 assessment model for the WAP. The maximum biological age was set to \(a_{max} = 8\) years, consistent with observed krill longevity in the WAP (\protect\hyperlink{ref-Thanassekos2014}{Thanassekos et al., 2014}). Growth follows the Von Bertalanffy equation:
+Krill biological parameters were derived from the fitted SS3 assessment model for the WAP. The maximum biological age was set to 8 years, consistent with observed krill longevity in the region. Individual growth is modelled using the Von Bertalanffy equation, with parameters estimated from field samples, yielding an asymptotic length of 60 mm and a growth coefficient of 0.48 per year. Body weight is calculated from length using a power-law allometric relationship specific to Antarctic krill.
 
-\[L_a = L_\infty \left(1 - e^{-K(a - t_0)}\right)\]
-
-with \(L_\infty = 60\) mm, \(K = 0.48 \, \text{yr}^{-1}\), and \(t_0 = -0.1 \, \text{yr}\). Length-weight allometry is:
-
-\[W_a = a_{LW} \, L_a^{b_{LW}}\]
-
-with \(a_{LW} = 2.36 \times 10^{-12}\) (W in tonnes, L in mm) and \(b_{LW} = 3.19\).
-
-Natural mortality is age-structured to reflect the higher post-larval mortality typical of krill:
+Natural mortality is age-structured, reflecting the high post-larval mortality typical of this species. Post-larval individuals (age 0) experience a natural mortality rate of 0.81 per year, declining through early and late juvenile stages, before stabilizing at 0.27 per year for adults (ages 5--8). This age-structured mortality profile is critical for accurate recruitment dynamics in krill.
 
 \begin{longtable}[]{@{}ccl@{}}
-\caption{Age-specific natural mortality (\(M_a\)) assumed for Antarctic krill.}\tabularnewline
+\caption{Age-specific natural mortality for Antarctic krill.}\tabularnewline
 \toprule\noalign{}
-Age & \(M_a\) (yr\(^{-1}\)) & Stage \\
+Age & M (yr\(^{-1}\)) & Life stage \\
 \midrule\noalign{}
 \endfirsthead
 \toprule\noalign{}
-Age & \(M_a\) (yr\(^{-1}\)) & Stage \\
+Age & M (yr\(^{-1}\)) & Life stage \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -306,39 +284,21 @@ Age & \(M_a\) (yr\(^{-1}\)) & Stage \\
 5--8 & 0.270 & Adult \\
 \end{longtable}
 
-Maturity and selectivity were both modelled as logistic functions of length, with \(L_{50}^{mat} = 35\) mm, \(L_{95}^{mat} = 45\) mm, \(L_{50}^{sel} = 30\) mm, and \(L_{95}^{sel} = 45\) mm.
+Maturity and fishing selectivity are both modelled as logistic functions of body length. Maturity increases from 0 at 35 mm to 1 at 45 mm. Selectivity to the fishery increases from 0 at 30 mm to 1 at 45 mm, reflecting the size selectivity of the gear. The full growth and weight-at-age relationships are provided in Appendix A.
 
-\hypertarget{r0-scaling-a-critical-correction}{%
-\subsection{R0 Scaling: A Critical Correction}\label{r0-scaling-a-critical-correction}}
+\hypertarget{r0-scaling-a-technical-calibration}{%
+\subsection{R0 Scaling: A Technical Calibration}\label{r0-scaling-a-technical-calibration}}
 
-A fundamental challenge when linking an SS3 model to \texttt{MSEtool} is the incompatibility in the definition of virgin recruitment \(R_0\). In SS3, \(R_0\) is expressed in natural numbers (individuals), whereas \texttt{MSEtool} internally computes unfished spawning biomass as:
+A critical technical step when linking SS3 to \texttt{MSEtool} is resolving the incompatibility between how each platform defines unfished recruitment. SS3 reports recruitment in absolute numbers of individuals, whereas \texttt{MSEtool} internally computes unfished spawning biomass by multiplying the recruitment parameter by the spawning potential ratio (per-recruit biomass). When krill parameters (weight-at-age in tonnes) are applied directly to SS3's large unfished recruitment value, the resulting biomass estimate becomes numerically inconsistent with the SS3 assessment.
 
-\[B_0^{MSE} = R_0 \cdot \phi_0\]
+To resolve this, we back-calculated the appropriate recruitment parameter for \texttt{MSEtool} by inverting the relationship between \(B_0\), recruitment, and per-recruit biomass. This ensures that the OM's initial unfished biomass matches the SS3 estimate of 2,029,000 tonnes and that the initial depletion level (ratio of current to unfished biomass) is consistent with the stock assessment. The detailed procedure is documented in Appendix A. This calibration is essential for producing biologically meaningful projections and ensuring that the OM correctly represents the initial stock condition.
 
-where \(\phi_0\) is the spawning potential ratio per recruit (tonnes per recruit). Using the SS3 \(R_0\) directly (\(3.69 \times 10^8\) individuals) with weight-at-age expressed in tonnes produces an internal \(B_0^{MSE}\) of approximately 79 t , five orders of magnitude below the true \(B_0 \approx 2{,}029{,}000\) t estimated by the assessment.
+\hypertarget{recruitment-stochasticity-and-uncertainty}{%
+\subsection{Recruitment Stochasticity and Uncertainty}\label{recruitment-stochasticity-and-uncertainty}}
 
-The solution applied here is to back-calculate \(R_0^{MSE}\) from the correct SS3 \(B_0\):
+Recruitment in the projection period is subject to random deviations that capture the interannual variability observed in krill. These deviations follow an autoregressive process with a moderate autocorrelation of 0.5, meaning that high recruitment in one year tends to be followed by moderately high recruitment the next year, but not perfectly. The magnitude of recruitment variability (standard deviation in log-space) is one of the key dimensions of uncertainty varied across the OM grid.
 
-\[R_0^{MSE} = \frac{B_0^{SS3}}{\phi_0}\]
-
-where \(\phi_0\) incorporates a plus-group correction at \(a_{max}\):
-
-\[l_{a_{max}} = \frac{l_{a_{max}-1} \cdot e^{-M_{a_{max}-1}}}{1 - e^{-M_{a_{max}}}}\]
-
-\[\phi_0 = \sum_{a=0}^{a_{max}} l_a \, w_a \, m_a\]
-
-This ensures that \texttt{MSEtool}'s internal \(B_0\) matches the SS3 estimate, producing biologically consistent initial depletion (\(D_{2018} \approx 0.808\)).
-
-\hypertarget{recruitment-stochasticity}{%
-\subsection{Recruitment Stochasticity}\label{recruitment-stochasticity}}
-
-Recruitment deviations in the projection period follow an AR(1) log-normal process:
-
-\[\varepsilon_t = \rho \, \varepsilon_{t-1} + \sqrt{1 - \rho^2} \, \delta_t, \quad \delta_t \sim \mathcal{N}(0, \sigma_R^2)\]
-
-\[\epsilon_t = e^{\varepsilon_t}\]
-
-where \(\rho = 0.5\) is the autocorrelation parameter. The \texttt{Perr\_y} array in \texttt{MSEtool} has dimensions \([n_{sim} \times (a_{max} + n_{hist} + n_{proj})]\) = \([48 \times 66]\), which includes: 8 pre-history columns (initializing cohort structure at \(t=0\)), 28 historical columns from SS3 recruitment deviations, and 30 projection columns from the AR(1) process.
+To initialize the operating model, the historical recruitment deviations estimated by SS3 are used for the conditioning period (1991--2018). For the projection period, new recruitment deviations are generated stochastically, with their variability determined by the specific OM scenario. The technical implementation within \texttt{MSEtool} is described in Appendix A.
 
 \hypertarget{operating-model-grid}{%
 \subsection{Operating Model Grid}\label{operating-model-grid}}
@@ -373,17 +333,11 @@ Each OM retains the same biological parameters but differs in \(\sigma_R\) and \
 \hypertarget{management-procedures}{%
 \subsection{Management Procedures}\label{management-procedures}}
 
-Two candidate MPs were evaluated:
+Two candidate harvest control rules (HCRs) were evaluated in this MSE.
 
-\textbf{HCR 1 Constant Catch (CC145):} Issues a fixed TAC of 145,000 t per year, corresponding to the current CCAMLR catch limit for krill in Area 48. This MP represents the status quo and requires no biomass information:
+The first is the Constant Catch rule (CC145), which implements the current CCAMLR management approach: a fixed total allowable catch of 145,000 tonnes per year. This rule is simple, transparent, and requires no real-time biomass estimation. It represents the status quo and provides a baseline for comparison.
 
-\[\text{TAC}_t = 145{,}000 \, \text{t}\]
-
-\textbf{HCR 2 Proportional Biomass Rule (HCR Proportional):} Issues a TAC proportional to the estimated biomass index, scaled to absolute biomass using \(B_0\):
-
-\[\text{TAC}_t = 0.05 \times B_{rel,t} \times B_0\]
-
-where \(B_{rel,t}\) is the most recent relative biomass index from \texttt{Data@Ind} (a dimensionless index centred near 1.0 in the historical period). The 5\% exploitation rate was chosen as a low-impact, precautionary target consistent with CCAMLR ecosystem considerations.
+The second is the Proportional Biomass rule (HCR Proportional), which adjusts the catch dynamically based on the estimated current biomass of the stock. When biomass is high, the rule allows higher catches; when biomass declines, catches are automatically reduced. This is achieved by setting the TAC equal to a fixed percentage (5\%) of the estimated total biomass, scaled using the unfished biomass estimate from the assessment. The 5\% rate was chosen as a precautionary target that balances yield with conservation, consistent with CCAMLR ecosystem considerations. This rule requires annual biomass monitoring data to function effectively, but provides adaptive feedback that the fixed catch cannot achieve.
 
 \hypertarget{performance-metrics}{%
 \subsection{Performance Metrics}\label{performance-metrics}}
@@ -432,23 +386,6 @@ Fleet-specific fishing mortality rates (\(F_{fleet}\)) were extracted by identif
 \end{Shaded}
 
 Historical SSB relative to \(B_0\) was retained as a reference trajectory for the wormplot figures.
-
-\hypertarget{array-dimensions-in-msetool}{%
-\subsection{Array Dimensions in MSEtool}\label{array-dimensions-in-msetool}}
-
-\texttt{MSEtool} imposes strict array dimensions for custom parameter (\texttt{cpars}) slots:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{Age arrays} (\texttt{Wt\_age}, \texttt{Mat\_age}, \texttt{M\_ageArray}, \texttt{V}): \([n_{sim} \times (a_{max}+1) \times (n_{hist} + n_{proj})]\) = \([48 \times 9 \times 58]\)
-\item
-  \textbf{Perr\_y}: \([n_{sim} \times (a_{max} + n_{hist} + n_{proj})]\) = \([48 \times 66]\)
-\item
-  \textbf{Find}: \([n_{sim} \times n_{hist}]\) = \([48 \times 28]\)
-\end{itemize}
-
-These dimensions reflect the internal convention where MSEtool indexes ages \(0, 1, \ldots, a_{max}\) (hence \(a_{max}+1\) columns), and where \texttt{Perr\_y} requires columns for the pre-history cohort initialization period.
 
 \hypertarget{pre-mse-diagnostics}{%
 \subsection{Pre-MSE Diagnostics}\label{pre-mse-diagnostics}}
@@ -629,9 +566,6 @@ Perry, F. A., Atkinson, A., Sailley, S. F., Tarling, G. A., Hill, S. L., Lucas, 
 \leavevmode\vadjust pre{\hypertarget{ref-R-base}{}}%
 R Core Team. (2024). \emph{R: A language and environment for statistical computing}. R Foundation for Statistical Computing. \url{https://www.R-project.org/}
 
-\leavevmode\vadjust pre{\hypertarget{ref-Thanassekos2014}{}}%
-Thanassekos, S., Cox, M. J., \& Reid, K. (2014). {Investigating the effect of recruitment variability on length-based recruitment indices for antarctic krill using an individual-based population dynamics model}. \emph{PLoS ONE}, \emph{9}(12), 1--20. \url{https://doi.org/10.1371/journal.pone.0114378}
-
 \leavevmode\vadjust pre{\hypertarget{ref-Warwick-Evans2022}{}}%
 Warwick-Evans, V., Constable, A., Dalla Rosa, L., Secchi, E. R., Seyboth, E., \& Trathan, P. N. (2022). {Using a risk assessment framework to spatially and temporally spread the fishery catch limit for Antarctic krill in the west Antarctic Peninsula: A template for krill fisheries elsewhere}. \emph{Frontiers in Marine Science}, \emph{9}(November). \url{https://doi.org/10.3389/fmars.2022.1015851}
 
@@ -642,11 +576,100 @@ Zhao, X., Collins, M., Watters, G. M., \& Ziegler, P. (2023). \emph{{CCAMLR's re
 
 \pagebreak
 
-\hypertarget{appendix-key-r-code}{%
-\section{Appendix: Key R Code}\label{appendix-key-r-code}}
+\hypertarget{appendix-a-operating-model-equations}{%
+\section{Appendix A: Operating Model Equations}\label{appendix-a-operating-model-equations}}
 
-\hypertarget{r0-scaling}{%
-\subsection{R0 Scaling}\label{r0-scaling}}
+The core equations governing the age-structured operating model for Antarctic krill are summarized below. These equations are implemented stochastically within \texttt{MSEtool} across 48 independent simulations.
+
+\hypertarget{a0.-array-dimensions-in-msetool}{%
+\subsection{A0. Array Dimensions in MSEtool}\label{a0.-array-dimensions-in-msetool}}
+
+\texttt{MSEtool} imposes strict array dimensions for custom parameter (\texttt{cpars}) slots:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Age arrays} (\texttt{Wt\_age}, \texttt{Mat\_age}, \texttt{M\_ageArray}, \texttt{V}): \([n_{sim} \times (a_{max}+1) \times (n_{hist} + n_{proj})]\) = \([48 \times 9 \times 58]\)
+\item
+  \textbf{Perr\_y}: \([n_{sim} \times (a_{max} + n_{hist} + n_{proj})]\) = \([48 \times 66]\)
+\item
+  \textbf{Find}: \([n_{sim} \times n_{hist}]\) = \([48 \times 28]\)
+\end{itemize}
+
+These dimensions reflect the internal convention where MSEtool indexes ages \(0, 1, \ldots, a_{max}\) (hence \(a_{max}+1\) columns), and where \texttt{Perr\_y} requires columns for the pre-history cohort initialization period.
+
+\hypertarget{a1.-population-dynamics}{%
+\subsection{A1. Population Dynamics}\label{a1.-population-dynamics}}
+
+\textbf{Age-transition equation:}
+\[N_{a,t+1} = N_{a,t} \, e^{-(F_{a,t} + M_{a,t})}\]
+
+\textbf{Plus-group (age 8 and older):}
+\[N_{8,t+1} = N_{7,t} \, e^{-(F_{7,t} + M_{7,t})} + N_{8,t} \, e^{-(F_{8,t} + M_{8,t})}\]
+
+where \(N_{a,t}\) is numbers-at-age \(a\) in year \(t\), \(F_{a,t}\) is age-specific fishing mortality, and \(M_{a,t}\) is age-specific natural mortality.
+
+\hypertarget{a2.-recruitment}{%
+\subsection{A2. Recruitment}\label{a2.-recruitment}}
+
+\textbf{Beverton-Holt stock-recruitment relationship:}
+\[R_t = \frac{4 h R_0 \, \text{SSB}_t}{B_0(1-h) + \text{SSB}_t(5h-1)} \cdot \epsilon_t\]
+
+\textbf{Recruitment deviations (AR(1) log-normal):}
+\[\varepsilon_t = \rho \, \varepsilon_{t-1} + \sqrt{1 - \rho^2} \, \delta_t, \quad \delta_t \sim \mathcal{N}(0, \sigma_R^2)\]
+\[\epsilon_t = e^{\varepsilon_t}\]
+
+where \(h\) is steepness, \(R_0\) is virgin recruitment, \(B_0\) is virgin spawning biomass, \(\rho = 0.5\) is autocorrelation, and \(\sigma_R\) varies by OM scenario.
+
+\hypertarget{a3.-spawning-stock-biomass}{%
+\subsection{A3. Spawning Stock Biomass}\label{a3.-spawning-stock-biomass}}
+
+\[\text{SSB}_t = \sum_a N_{a,t} \, w_{a,t} \, m_{a,t}\]
+
+where \(w_{a,t}\) is weight-at-age and \(m_{a,t}\) is maturity-at-age.
+
+\hypertarget{a4.-growth-parameters}{%
+\subsection{A4. Growth Parameters}\label{a4.-growth-parameters}}
+
+\textbf{Von Bertalanffy length-at-age:}
+\[L_a = L_\infty \left(1 - e^{-K(a - t_0)}\right)\]
+with \(L_\infty = 60\) mm, \(K = 0.48\) yr\(^{-1}\), \(t_0 = -0.1\) yr.
+
+\textbf{Length-weight relationship:}
+\[W_a = a_{LW} \, L_a^{b_{LW}}\]
+with \(a_{LW} = 2.36 \times 10^{-12}\), \(b_{LW} = 3.19\) (W in tonnes, L in mm).
+
+\hypertarget{a5.-r0-calibration-for-msetool}{%
+\subsection{A5. R0 Calibration for MSEtool}\label{a5.-r0-calibration-for-msetool}}
+
+The unfished recruitment parameter for \texttt{MSEtool} is back-calculated from the SS3 biomass estimate:
+
+\[R_0^{MSE} = \frac{B_0^{SS3}}{\phi_0}\]
+
+where the spawning potential ratio per recruit is:
+
+\[\phi_0 = \sum_{a=0}^{a_{max}} l_a \, w_a \, m_a\]
+
+with \(l_a = \prod_{k=0}^{a-1} e^{-M_k}\) (accounting for plus-group dynamics at \(a_{max}\)).
+
+\hypertarget{a6.-harvest-control-rules}{%
+\subsection{A6. Harvest Control Rules}\label{a6.-harvest-control-rules}}
+
+\textbf{Constant Catch (CC145):}
+\[\text{TAC}_t = 145{,}000 \, \text{t}\]
+
+\textbf{Proportional Biomass (HCR Proportional):}
+\[\text{TAC}_t = 0.05 \times B_{rel,t} \times B_0^{SS3}\]
+
+where \(B_{rel,t}\) is the estimated relative biomass index in year \(t\).
+
+\pagebreak
+
+\hypertarget{appendix-b-key-r-code}{%
+\section{Appendix B: Key R Code}\label{appendix-b-key-r-code}}
+
+\hypertarget{r0-scaling-implementation}{%
+\subsection{R0 Scaling Implementation}\label{r0-scaling-implementation}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -675,8 +698,8 @@ Zhao, X., Collins, M., Watters, G. M., \& Ziegler, P. (2023). \emph{{CCAMLR's re
 \end{Highlighting}
 \end{Shaded}
 
-\hypertarget{proportional-hcr}{%
-\subsection{Proportional HCR}\label{proportional-hcr}}
+\hypertarget{proportional-hcr-implementation}{%
+\subsection{Proportional HCR Implementation}\label{proportional-hcr-implementation}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
